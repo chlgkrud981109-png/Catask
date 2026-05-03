@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>NaroTask - Workspace</title>
+    <title>NaroTask - Next Gen Workspace</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -12,415 +12,482 @@
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: {
-                        "primary": "#334155",
-                        "primary-container": "#f1f5f9",
-                        "on-primary": "#ffffff",
-                        "background": "#fafafa",
-                        "surface": "#ffffff",
-                        "tertiary": "#64748b",
-                        "accent": "#94a3b8"
-                    }
+                    colors: { "primary": "#334155", "background": "#fafafa" }
                 }
             }
         }
     </script>
     <style>
-        :root {
-            --bg-color: #fafafa;
-            --dot-color: rgba(0,0,0,0.1);
-        }
-        body { 
-            background-color: var(--bg-color); 
-            user-select: none; 
-            transition: background-color 0.4s ease;
-        }
+        :root { --bg-color: #fafafa; --dot-color: rgba(0,0,0,0.08); }
+        body { background-color: var(--bg-color); user-select: none; font-family: 'Plus_Jakarta_Sans', sans-serif; overflow: hidden; }
         
-        /* Pegboard Concept */
+        #canvas-container { position: relative; width: 100%; height: 100%; overflow: auto; cursor: crosshair; }
         #canvas {
             position: relative; width: 4000px; height: 4000px;
             background-color: var(--bg-color);
             background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
             background-size: 32px 32px;
-            transition: background-color 0.4s ease, background-image 0.4s ease;
+            transition: background-color 0.3s, background-image 0.3s;
         }
 
-        /* Widgets & Shadows */
-        .shadow-memo { box-shadow: 4px 4px 0px 0px rgba(51,65,85,0.1); }
-        .shadow-floating { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); }
+        .widget { position: absolute; cursor: grab; transition: transform 0.1s; z-index: 10; }
+        .widget:active { cursor: grabbing; transform: scale(1.02); z-index: 100; }
         
-        .magnetic-tape {
-            position: absolute; top: -10px; left: 50%;
-            transform: translateX(-50%) rotate(-1deg);
-            width: 44px; height: 18px;
-            background-color: rgba(255,255,255,0.6);
-            border: 1px solid rgba(0,0,0,0.03);
-            backdrop-filter: blur(2px);
-            z-index: 10;
+        /* Board Tabs */
+        .board-tab {
+            padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px; transition: all 0.2s; border: 1px solid transparent;
+            cursor: pointer; position: relative; white-space: nowrap;
         }
+        .board-tab.active { background: #ffffff; color: #334155; border-color: #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .board-tab:not(.active) { color: #94a3b8; }
+        .board-tab:not(.active):hover { background: rgba(0,0,0,0.03); }
 
-        .naro-checkbox {
-            appearance: none; width: 20px; height: 20px;
-            border: 2px solid #cbd5e1; border-radius: 6px;
-            outline: none; cursor: pointer; position: relative;
-            background-color: #ffffff; transition: all 0.2s;
+        .board-input {
+            background: transparent; border: none; padding: 0; font-weight: inherit; font-size: inherit;
+            color: inherit; outline: none; width: auto; pointer-events: none;
         }
-        .naro-checkbox:checked { background-color: #334155; border-color: #334155; }
-        .naro-checkbox:checked::after {
-            content: '✔'; position: absolute; color: white;
-            font-size: 11px; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        }
+        .board-tab.editing .board-input { pointer-events: auto; background: #f8fafc; padding: 0 4px; border-radius: 4px; min-width: 40px; }
 
-        .widget { position: absolute; cursor: grab; touch-action: none; transition: transform 0.1s; }
-        .widget:active { cursor: grabbing; transform: scale(1.01); z-index: 1000 !important; }
+        /* Sidebar Tree */
+        .tree-item {
+            padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; color: #64748b; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tree-item:hover { background: #f1f5f9; color: #1e293b; }
+        .tree-item.active { background: #e2e8f0; color: #0f172a; }
+        .tree-item.drag-over { background: #e2e8f0; border: 2px dashed #94a3b8; }
+
+        /* Tooltip Sidebar */
+        .icon-btn {
+            width: 44px; height: 44px; border-radius: 14px; background: white;
+            display: flex; align-items: center; justify-content: center; border: 1px solid #f1f5f9;
+            color: #64748b; transition: all 0.2s; position: relative;
+        }
+        .icon-btn:hover { background: #334155; color: white; border-color: #334155; transform: translateY(-2px); }
+        .icon-btn .tooltip {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px;
+            font-size: 11px; font-weight: 800; white-space: nowrap; opacity: 0; pointer-events: none;
+            transition: all 0.2s; z-index: 2000; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+        }
+        .icon-btn:hover .tooltip { opacity: 1; bottom: 56px; }
 
         /* Settings Drawer */
         #settings-drawer {
             position: fixed; top: 0; right: -360px; width: 360px; height: 100vh;
             background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
-            z-index: 100; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 1px solid rgba(0,0,0,0.05);
-            display: flex; flex-direction: column;
+            z-index: 300; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column;
         }
         #settings-drawer.open { right: 0; }
-
-        .mode-pill {
-            display: flex; background: #f1f5f9; padding: 4px; border-radius: 999px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        .mode-btn {
-            padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
-            transition: all 0.3s; color: #64748b;
-        }
-        .mode-btn.active { background: #ffffff; color: #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(15px); }
-        #onboarding { display: none; }
-        #onboarding.active { display: flex; }
-
-        /* Color Inputs */
-        input[type="color"] {
-            -webkit-appearance: none; border: none; width: 32px; height: 32px;
-            border-radius: 50%; cursor: pointer; overflow: hidden;
-        }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; overflow: hidden; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(6px);
+            z-index: 400; display: none; align-items: center; justify-content: center; p-6;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; width: 100%; max-width: 500px; border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); overflow: hidden;
+            display: flex; flex-direction: column; max-height: 90vh;
+        }
+        .modal-content.large { max-width: 800px; }
+
+        .naro-checkbox {
+            appearance: none; width: 18px; height: 18px; border: 2px solid #cbd5e1;
+            border-radius: 5px; outline: none; cursor: pointer; position: relative; transition: 0.2s;
+        }
+        .naro-checkbox:checked { background: #334155; border-color: #334155; }
+        .naro-checkbox:checked::after { content: '✔'; position: absolute; color: white; font-size: 10px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        .context-menu {
+            position: fixed; background: white; border: 1px solid #f1f5f9; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 6px; z-index: 500; display: none;
+        }
+        .context-menu button {
+            width: 100%; text-align: left; padding: 8px 12px; border-radius: 6px; font-size: 12px;
+            font-weight: 600; color: #64748b;
+        }
+        .context-menu button:hover { background: #f1f5f9; color: #1e293b; }
+
+        .truncated-box { max-height: 120px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
     </style>
 </head>
-<body class="bg-background text-slate-800 font-['Plus_Jakarta_Sans'] overflow-hidden">
+<body class="text-slate-800">
 
-<nav class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/60 bg-white flex flex-col py-6 gap-2 z-40 hidden md:flex">
-    <div class="px-6 pb-6 mb-2 border-b border-slate-100 flex items-center gap-3">
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">NaroTask</h1>
-    </div>
-    <div class="flex-1 flex flex-col gap-1 overflow-y-auto pt-4">
-        <a class="bg-slate-100 text-slate-900 rounded-xl px-4 py-3 mx-4 text-sm flex items-center gap-3 font-bold shadow-sm" href="#">
-            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dashboard</span> Board
-        </a>
-    </div>
-    <div class="px-4 mt-auto flex flex-col gap-3 pt-4 border-t border-slate-50">
-        <button onclick="addWidget('memo')" class="w-full bg-slate-800 text-white hover:bg-slate-700 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95">
-            <span class="material-symbols-outlined text-sm">push_pin</span> Add Memo
-        </button>
-        <button onclick="addWidget('routine')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
-            <span class="material-symbols-outlined text-sm">cycle</span> Daily Routine
-        </button>
-        <button onclick="addWidget('photo')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
-            <span class="material-symbols-outlined text-sm">image</span> Add Photo
-        </button>
-        <button onclick="addWidget('calendar')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
-            <span class="material-symbols-outlined text-sm">calendar_month</span> Add Calendar
-        </button>
-    </div>
-</nav>
-
-<main class="flex-1 ml-0 md:ml-64 flex flex-col h-screen relative overflow-hidden">
-    <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 flex justify-between items-center w-full px-8 py-4 sticky top-0 z-30">
-        <div class="mode-pill">
-            <button onclick="setMode('work')" class="mode-btn" id="btn-work">Work</button>
-            <button onclick="setMode('study')" class="mode-btn" id="btn-study">Study</button>
-            <button onclick="setMode('personal')" class="mode-btn" id="btn-personal">Personal</button>
-        </div>
-
-        <div class="flex items-center gap-4">
-            <div class="text-right mr-2 hidden sm:block">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" id="header-date"></p>
-                <p class="text-xl font-black text-slate-800" id="header-time"></p>
-            </div>
-            <button onclick="toggleSettings()" class="text-slate-400 hover:text-slate-800 hover:bg-slate-50 p-2 rounded-xl transition-all active:rotate-45">
+<div class="flex h-screen overflow-hidden">
+    <aside class="w-72 bg-white border-r border-slate-100 flex flex-col p-6 z-50">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-xl font-black tracking-tight text-slate-800">NaroTask</h1>
+            <button onclick="toggleSettings()" class="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all">
                 <span class="material-symbols-outlined">settings</span>
             </button>
-            <img class="w-10 h-10 rounded-2xl object-cover border-2 border-white shadow-sm cursor-pointer" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop" />
         </div>
-    </header>
 
-    <div class="flex-1 overflow-auto" id="canvas-container">
-        <div id="canvas">
-            <!-- Widgets injected here -->
+        <div class="flex-1 overflow-y-auto flex flex-col gap-6">
+            <div>
+                <div class="flex items-center justify-between px-2 mb-3">
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Workspace</span>
+                    <button onclick="addFolder()" class="text-slate-400 hover:text-slate-800"><span class="material-symbols-outlined text-sm">add</span></button>
+                </div>
+                <div id="sidebar-tree" class="flex flex-col gap-1"></div>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-6 border-t border-slate-50 flex gap-3 justify-center">
+            <button onclick="openCreateModal()" class="icon-btn">
+                <span class="material-symbols-outlined">sticky_note_2</span>
+                <span class="tooltip">Add Memo</span>
+            </button>
+            <button onclick="addWidget('routine')" class="icon-btn">
+                <span class="material-symbols-outlined">cycle</span>
+                <span class="tooltip">Daily Routine</span>
+            </button>
+            <button onclick="addWidget('photo')" class="icon-btn">
+                <span class="material-symbols-outlined">image</span>
+                <span class="tooltip">Add Photo</span>
+            </button>
+            <button onclick="addWidget('calendar')" class="icon-btn">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="tooltip">Add Calendar</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-40">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="board-tabs">
+                <button onclick="addBoard()" class="p-2 text-slate-400 hover:text-slate-800"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right mr-2 hidden sm:block">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" id="header-date"></p>
+                    <p class="text-xl font-black text-slate-800" id="header-time"></p>
+                </div>
+                <img class="w-9 h-9 rounded-xl object-cover border-2 border-white shadow-sm" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop" />
+            </div>
+        </header>
+
+        <div id="canvas-container">
+            <div id="canvas"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+<div id="create-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+    <div class="modal-content p-10">
+        <h2 class="text-2xl font-black mb-6">New Memo</h2>
+        <div class="space-y-6">
+            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Title</label><input id="new-memo-title" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100" placeholder="Memo Title..."/></div>
+            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Folder</label><select id="new-memo-folder" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100"></select></div>
+            <div class="flex gap-4 pt-4"><button onclick="closeModals()" class="flex-1 bg-slate-100 text-slate-400 font-bold py-4 rounded-2xl">Cancel</button><button onclick="confirmCreateMemo()" class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl">Create</button></div>
         </div>
     </div>
-</main>
+</div>
+
+<div id="doc-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+    <div class="modal-content large p-10">
+        <div class="flex items-center justify-between mb-8">
+            <input id="doc-title" class="text-3xl font-black text-slate-800 border-none p-0 bg-transparent focus:ring-0 w-3/4" onchange="updateDocTitle(this.value)"/>
+            <button onclick="closeModals()" class="material-symbols-outlined text-slate-300">close</button>
+        </div>
+        <div class="space-y-6 flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between"><h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tasks</h3><button onclick="addDocTask()" class="text-slate-800 font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-sm">add</span> Add Task</button></div>
+            <div id="doc-tasks-list" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+
+<div id="task-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+    <div class="modal-content p-10">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-black text-slate-800">Task Detail</h2>
+            <div class="flex items-center gap-3"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="task-dashboard-sync" class="naro-checkbox" onchange="toggleTaskSync(this.checked)"/><span class="text-xs font-bold text-slate-400">Board Sync</span></label><button onclick="closeTaskModal()" class="material-symbols-outlined text-slate-300">close</button></div>
+        </div>
+        <div class="space-y-6 flex-1 overflow-y-auto">
+            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Task Name</label><input id="task-detail-name" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800" onchange="updateTaskDetailName(this.value)"/></div>
+            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Content</label><textarea id="task-detail-content" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-600 h-32" onchange="updateTaskDetailContent(this.value)"></textarea></div>
+            <button onclick="addTaskImage()" class="w-full border-2 border-dashed border-slate-100 rounded-xl py-4 text-slate-300 font-bold text-xs">+ Add Image URL</button>
+            <div id="task-images" class="grid grid-cols-2 gap-3 pb-4"></div>
+        </div>
+    </div>
+</div>
 
 <!-- Settings Drawer -->
 <div id="settings-drawer" class="shadow-2xl">
-    <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-        <h2 class="text-xl font-black text-slate-800">Workspace Settings</h2>
-        <button onclick="toggleSettings()" class="material-symbols-outlined text-slate-400 hover:text-slate-800">close</button>
-    </div>
-    
-    <div class="p-8 overflow-y-auto flex-1 flex flex-col gap-8">
-        <!-- BG Presets -->
-        <div>
-            <label class="text-[11px] font-black text-slate-400 uppercase mb-4 block">Background Presets</label>
-            <div class="grid grid-cols-4 gap-3">
-                <button onclick="applyTheme('#ffffff', 'rgba(0,0,0,0.08)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#ffffff]"></button>
-                <button onclick="applyTheme('#f8fafc', 'rgba(0,0,0,0.06)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#f8fafc]"></button>
-                <button onclick="applyTheme('#f1f5f9', 'rgba(0,0,0,0.1)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#f1f5f9]"></button>
-                <button onclick="applyTheme('#fef3c7', 'rgba(0,0,0,0.05)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#fef3c7]"></button>
-                <button onclick="applyTheme('#334155', 'rgba(255,255,255,0.1)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#334155]"></button>
-                <button onclick="applyTheme('#1e293b', 'rgba(255,255,255,0.08)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#1e293b]"></button>
-                <button onclick="applyTheme('#0f172a', 'rgba(255,255,255,0.06)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#0f172a]"></button>
-                <button onclick="applyTheme('#020617', 'rgba(255,255,255,0.15)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#020617]"></button>
-            </div>
-        </div>
-
-        <!-- Custom Background -->
-        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
-            <div>
-                <label class="text-xs font-black text-slate-800 block">Custom Background</label>
-                <span class="text-[10px] text-slate-400 font-bold" id="bg-hex">#fafafa</span>
-            </div>
-            <input type="color" id="bg-picker" oninput="updateBg(this.value)"/>
-        </div>
-
-        <!-- Custom Dots -->
-        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
-            <div>
-                <label class="text-xs font-black text-slate-800 block">Dot Color (타공판 점)</label>
-                <span class="text-[10px] text-slate-400 font-bold" id="dot-hex">rgba(0,0,0,0.1)</span>
-            </div>
-            <input type="color" id="dot-picker" oninput="updateDots(this.value)"/>
-        </div>
-    </div>
-
-    <div class="p-8 border-t border-slate-100 bg-slate-50/50">
-        <p class="text-[10px] text-slate-300 font-black uppercase tracking-widest">NaroTask v2.1 Professional</p>
+    <div class="p-8 border-b flex justify-between items-center"><h2 class="text-xl font-black text-slate-800">Board Settings</h2><button onclick="toggleSettings()" class="material-symbols-outlined text-slate-400">close</button></div>
+    <div class="p-8 flex flex-col gap-8">
+        <div><label class="text-[11px] font-black text-slate-400 uppercase mb-4 block">Presets (Active Board)</label><div class="grid grid-cols-4 gap-3">
+            <button onclick="applyTheme('#ffffff', 'rgba(0,0,0,0.15)')" class="w-full aspect-square rounded-xl bg-white border"></button>
+            <button onclick="applyTheme('#f8fafc', 'rgba(0,0,0,0.12)')" class="w-full aspect-square rounded-xl bg-[#f8fafc] border"></button>
+            <button onclick="applyTheme('#334155', 'rgba(255,255,255,0.1)')" class="w-full aspect-square rounded-xl bg-[#334155] border"></button>
+            <button onclick="applyTheme('#0f172a', 'rgba(255,255,255,0.08)')" class="w-full aspect-square rounded-xl bg-[#0f172a] border"></button>
+        </div></div>
+        <div class="flex items-center justify-between"><label class="text-xs font-black">BG Color</label><input type="color" oninput="updateBg(this.value)"/></div>
+        <div class="flex items-center justify-between"><label class="text-xs font-black">Dot Color</label><input type="color" oninput="updateDots(this.value)"/></div>
     </div>
 </div>
 
-<!-- Naro Toast -->
+<div id="context-menu" class="context-menu">
+    <button onclick="renameBoardRequest()">✏️ Rename</button>
+    <button onclick="favoriteBoard()">⭐ Favorite</button>
+    <button onclick="deleteBoard()">🗑️ Delete</button>
+</div>
+
 <div id="naro-toast" class="fixed bottom-8 right-8 flex items-end gap-3 z-50">
     <div class="bg-white/90 backdrop-blur-lg text-slate-800 p-5 rounded-3xl rounded-br-none shadow-2xl border border-slate-100 max-w-[240px] relative mb-6">
-        <p class="text-sm font-bold leading-relaxed" id="naro-speech">오늘도 멋진 하루를 만들어봐!</p>
-        <div class="absolute -bottom-2 right-0 w-4 h-4 bg-white/90 border-b border-r border-slate-100 transform rotate-45 translate-x-1/2 -translate-y-1/2"></div>
+        <p class="text-sm font-bold leading-relaxed" id="naro-speech">오늘도 멋진 하루를!</p>
     </div>
-    <div class="relative w-32 h-32 flex items-center justify-center">
-        <img id="naro-img" src="naro_basic.png" class="w-full h-full object-contain scale-110" onerror="this.src='https://cdn-icons-png.flaticon.com/512/616/616408.png'" />
-        <div id="achievement-badge" class="absolute top-2 right-2 bg-slate-800 text-white text-[10px] font-black w-7 h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white">!</div>
-    </div>
-</div>
-
-<!-- Onboarding -->
-<div id="onboarding" class="fixed inset-0 z-[100] glass flex items-center justify-center p-6">
-    <div class="bg-white rounded-[40px] shadow-2xl p-10 max-w-md w-full border border-slate-100 text-center">
-        <h2 class="text-3xl font-black text-slate-800 mb-2">반가워! 난 나로야.</h2>
-        <p class="text-slate-400 mb-10 font-bold text-sm">어떤 환경에서 함께해볼까?</p>
-        <div class="grid gap-4">
-            <button onclick="finishOnboarding('work')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
-                <span>💼 업무 효율 중심</span><span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            <button onclick="finishOnboarding('study')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
-                <span>📚 열공 모드</span><span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            <button onclick="finishOnboarding('personal')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
-                <span>🏠 나만의 공간</span><span class="material-symbols-outlined">chevron_right</span>
-            </button>
-        </div>
-    </div>
+    <div class="relative w-32 h-32"><img src="1final.png" class="w-full h-full object-contain scale-110"/></div>
 </div>
 
 <script>
     let state = {
-        mode: 'study',
-        onboarded: false,
-        widgets: [],
-        lastId: 0,
-        bgColor: '#fafafa',
-        dotColor: 'rgba(0,0,0,0.1)'
-    };
-
-    const NARO_TONES = {
-        work: {
-            idle: ["ㅇㅇ님 이거 하하셨어요? 빨리 좀 부탁드려요~", "업무 리스트를 확인해봐요!", "화이팅입니다!"],
-            angry: ["데드라인이...! 💢", "이걸 아직도 안하셨다니요!", "빨리 처리해주셔야 해요!"],
-            happy: ["완벽한 업무 처리네요 ✨", "역시 ㅇㅇ님! 최고예요.", "오늘 퇴근 빨리 하겠는데요?"]
-        },
-        study: {
-            idle: ["ㅇㅇ야 이거 아직도 안했냐?", "열공 모드 장착! 📚", "집중하자 집중!"],
-            angry: ["딴짓 금지! 💢", "너 이러다 나중에 후회한다?", "지금 당장 공부해!"],
-            happy: ["와, 너 진짜 열심히 한다! ✨", "똑똑해지는 소리가 들려!", "기특해 기특해!"]
-        },
-        personal: {
-            idle: ["소소한 일상의 기록.", "오늘 하루는 어땠나요?", "나만의 속도로 가봐요."],
-            angry: ["조금 더 부지런히 남겨볼까요?", "기록이 멈춰있어요.", "잠시 짬을 내어 적어봐요."],
-            happy: ["참 좋은 하루네요! ✨", "기록이 모여 추억이 돼요.", "정말 수고했어요!"]
-        }
+        boards: [{ id: 1, name: 'Board1', widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }],
+        activeBoardId: 1, folders: [], documents: [],
+        currentDocId: null, currentTaskId: null
     };
 
     function init() {
-        const saved = localStorage.getItem('naro_v2.1_state');
+        const saved = localStorage.getItem('naro_v7_state');
         if (saved) state = JSON.parse(saved);
-        
-        if (!state.onboarded) {
-            document.getElementById('onboarding').classList.add('active');
-        } else {
-            setMode(state.mode);
-            applyTheme(state.bgColor, state.dotColor);
-            renderWidgets();
-            updateNaro();
-        }
+        switchBoard(state.activeBoardId);
+        renderSidebar(); renderBoardTabs(); renderActiveBoard();
         setInterval(updateClock, 1000); updateClock();
     }
+    function save() { localStorage.setItem('naro_v7_state', JSON.stringify(state)); }
 
-    function save() { localStorage.setItem('naro_v2.1_state', JSON.stringify(state)); }
-
-    function finishOnboarding(mode) {
-        state.mode = mode; state.onboarded = true;
-        addWidget('memo', 120, 100, { title: '환영해!', items: [{ text: '첫 번째 할 일', checked: false }] });
-        addWidget('calendar', 450, 100);
-        document.getElementById('onboarding').classList.remove('active');
-        setMode(mode); save(); renderWidgets(); updateNaro();
-    }
-
-    function setMode(mode) {
-        state.mode = mode;
-        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.id === `btn-${mode}`));
-        updateNaro(); save();
-    }
-
+    // Theme & Board Settings
+    function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
     function applyTheme(bg, dot) {
-        state.bgColor = bg; state.dotColor = dot;
+        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
+        if(b) b.theme = { bgColor: bg, dotColor: dot };
+        updateCanvasTheme(bg, dot); save();
+    }
+    function updateCanvasTheme(bg, dot) {
         document.documentElement.style.setProperty('--bg-color', bg);
         document.documentElement.style.setProperty('--dot-color', dot);
-        document.getElementById('bg-hex').textContent = bg;
-        document.getElementById('dot-hex').textContent = dot;
-        document.getElementById('bg-picker').value = bg.startsWith('rgba') ? '#ffffff' : bg;
-        save();
+    }
+    function updateBg(c) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); applyTheme(c, b.theme.dotColor); }
+    function updateDots(c) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); applyTheme(b.theme.bgColor, c); }
+
+    // Boards & Tabs
+    function addBoard() { const id = Date.now(); state.boards.push({ id, name: `Board${state.boards.length+1}`, widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }); switchBoard(id); }
+    function renderBoardTabs() {
+        const container = document.getElementById('board-tabs'); const addBtn = container.querySelector('button'); container.innerHTML = '';
+        state.boards.sort((a,b) => b.isFavorite - a.isFavorite).forEach(b => {
+            const div = document.createElement('div'); div.className = `board-tab ${b.id === state.activeBoardId ? 'active' : ''}`;
+            const span = document.createElement('span'); span.textContent = (b.isFavorite ? '⭐ ' : '') + b.name;
+            const input = document.createElement('input'); input.className = 'board-input'; input.value = b.name; input.style.display = 'none';
+            div.appendChild(span); div.appendChild(input);
+            div.onclick = () => switchBoard(b.id);
+            div.ondblclick = (e) => { e.stopPropagation(); startRename(div, b.id); };
+            div.oncontextmenu = (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY, b.id); };
+            container.appendChild(div);
+        });
+        container.appendChild(addBtn);
+    }
+    function startRename(el, id) {
+        el.classList.add('editing'); const span = el.querySelector('span'); const input = el.querySelector('input');
+        input.style.display = 'block'; span.style.display = 'none'; input.focus(); input.select();
+        const finish = () => { const val = input.value || 'Untitled'; state.boards.find(b=>b.id===id).name = val; renderBoardTabs(); save(); };
+        input.onblur = finish; input.onkeydown = (e) => { if(e.key==='Enter') finish(); };
+        input.style.width = (input.value.length + 2) + 'ch';
+        input.oninput = () => { input.style.width = (input.value.length + 2) + 'ch'; };
+    }
+    function switchBoard(id) {
+        state.activeBoardId = id; const b = state.boards.find(bd=>bd.id===id);
+        if(b) updateCanvasTheme(b.theme.bgColor, b.theme.dotColor);
+        renderBoardTabs(); renderActiveBoard(); save();
     }
 
-    function updateBg(color) { applyTheme(color, state.dotColor); }
-    function updateDots(color) { applyTheme(state.bgColor, color); }
-    function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('header-date').textContent = now.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
-        document.getElementById('header-time').textContent = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
-
-    // Widgets
-    function addWidget(type, x = 100, y = 100, data = null) {
-        state.lastId++;
-        state.widgets.push({ id: state.lastId, type, x, y, data: data || getDefaultData(type) });
-        renderWidgets(); save();
-    }
-
-    function getDefaultData(type) {
-        switch(type) {
-            case 'memo': return { title: 'New Memo', items: [] };
-            case 'routine': return { items: [{ text: 'Water', checked: false }] };
-            case 'photo': return { url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067&auto=format&fit=crop', caption: 'Memories' };
-            case 'calendar': return {};
-        }
-    }
-
-    function renderWidgets() {
-        const container = document.getElementById('canvas'); container.innerHTML = '';
-        state.widgets.forEach(w => {
-            const div = document.createElement('div');
-            div.className = 'widget group'; div.style.left = w.x + 'px'; div.style.top = w.y + 'px';
+    // Sidebar, Folders & Drag-Drop
+    function addFolder() { const n = prompt("Folder Name:"); if(n) { state.folders.push({id:Date.now(), name:n}); renderSidebar(); save(); } }
+    function renderSidebar() {
+        const tree = document.getElementById('sidebar-tree'); tree.innerHTML = '';
+        state.folders.forEach(f => {
+            const container = document.createElement('div'); container.className = 'mb-2';
+            const fItem = document.createElement('div'); fItem.className = 'tree-item font-bold';
+            fItem.innerHTML = `<span class="material-symbols-outlined text-sm">folder</span> ${f.name}`;
+            fItem.ondragover = (e) => { e.preventDefault(); fItem.classList.add('drag-over'); };
+            fItem.ondragleave = () => fItem.classList.remove('drag-over');
+            fItem.ondrop = (e) => { e.preventDefault(); fItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), f.id); };
+            container.appendChild(fItem);
             
-            let html = '';
-            if (w.type === 'memo') {
-                html = `
-                    <article class="bg-white rounded-3xl p-6 shadow-memo w-72 border border-slate-100">
-                        <div class="flex justify-between items-start mb-4">
-                            <input class="font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-4/5 text-lg" value="${w.data.title}" onchange="updateWidgetData(${w.id}, {title: this.value})"/>
-                            <button onclick="deleteWidget(${w.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300 hover:text-red-400">delete</button>
-                        </div>
-                        <ul class="space-y-2 mb-4">
-                            ${w.data.items.map((it, idx) => `<li class="flex items-center gap-3"><input type="checkbox" ${it.checked ? 'checked' : ''} class="naro-checkbox" onchange="toggleItem(${w.id}, ${idx})"/><span class="text-sm font-semibold ${it.checked ? 'line-through opacity-30' : 'text-slate-600'}">${it.text}</span></li>`).join('')}
-                        </ul>
-                        <div class="flex gap-2"><input id="add-item-${w.id}" class="text-xs bg-slate-50 border-none rounded-xl p-2.5 w-full font-bold" placeholder="Add..."/><button onclick="addItem(${w.id})" class="bg-slate-800 text-white rounded-xl px-3 flex items-center justify-center"><span class="material-symbols-outlined text-sm">add</span></button></div>
-                    </article>
-                `;
-            } else if (w.type === 'routine') {
-                html = `
-                    <article class="bg-white rounded-[32px] p-6 shadow-floating w-80 border border-slate-50">
-                        <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-slate-400 text-sm">cycle</span> Routine</h3>
-                        <div class="flex flex-wrap gap-2">
-                            ${w.data.items.map((it, idx) => `<div onclick="toggleItem(${w.id}, ${idx})" class="px-4 py-2 rounded-2xl text-[10px] font-black border-2 ${it.checked ? 'bg-slate-50 border-slate-50 text-slate-300' : 'bg-white border-slate-100 text-slate-600'} cursor-pointer transition-all">${it.text}</div>`).join('')}
-                            <button onclick="addRoutineItem(${w.id})" class="px-4 py-2 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 font-black text-[10px]">+</button>
-                        </div>
-                        <button onclick="deleteWidget(${w.id})" class="absolute -top-2 -right-2 bg-white shadow-md border border-slate-100 rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>
-                    </article>
-                `;
-            } else if (w.type === 'photo') {
-                html = `
-                    <article class="bg-white p-3 pb-8 rounded shadow-floating rotate-[1.5deg] w-64">
-                        <div class="magnetic-tape"></div>
-                        <img src="${w.data.url}" class="w-full h-44 object-cover rounded-sm border cursor-pointer" onclick="changePhoto(${w.id})"/>
-                        <input class="text-center w-full text-[11px] font-bold text-slate-400 bg-transparent border-none p-0 focus:ring-0 mt-3" value="${w.data.caption}" onchange="updateWidgetData(${w.id}, {caption: this.value})"/>
-                        <button onclick="deleteWidget(${w.id})" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 material-symbols-outlined text-sm text-red-400 bg-white rounded-full p-1 shadow">delete</button>
-                    </article>
-                `;
-            } else if (w.type === 'calendar') {
+            const list = document.createElement('div'); list.id = `f-${f.id}`; list.className = 'ml-4 pl-2 border-l';
+            container.appendChild(list);
+            tree.appendChild(container);
+            state.documents.filter(d=>d.folderId===f.id).forEach(d => renderDocItem(d, list.id));
+        });
+        
+        const defContainer = document.createElement('div');
+        const defItem = document.createElement('div'); defItem.className = 'tree-item opacity-50';
+        defItem.innerHTML = `<span class="material-symbols-outlined text-sm">drafts</span> Default`;
+        defItem.ondragover = (e) => { e.preventDefault(); defItem.classList.add('drag-over'); };
+        defItem.ondragleave = () => defItem.classList.remove('drag-over');
+        defItem.ondrop = (e) => { e.preventDefault(); defItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), 'none'); };
+        defContainer.appendChild(defItem);
+        
+        const defList = document.createElement('div'); defList.id = 'f-none'; defList.className = 'ml-4';
+        defContainer.appendChild(defList);
+        tree.appendChild(defContainer);
+        state.documents.filter(d=>d.folderId==='none').forEach(d => renderDocItem(d, defList.id));
+        
+        const sel = document.getElementById('new-memo-folder'); sel.innerHTML='<option value="none">Default</option>';
+        state.folders.forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.name}</option>`);
+    }
+    function renderDocItem(d, pid) {
+        const div = document.createElement('div'); div.className = 'tree-item'; div.draggable = true;
+        div.innerHTML = `<span class="material-symbols-outlined text-sm">sticky_note_2</span> ${d.title}`;
+        div.onclick = () => openDocModal(d.id);
+        div.ondragstart = (e) => { e.dataTransfer.setData('docId', d.id); el.style.opacity = '0.5'; };
+        div.ondragend = () => { div.style.opacity = '1'; };
+        document.getElementById(pid).appendChild(div);
+        d.tasks.forEach(t => {
+            const tEl = document.createElement('div'); tEl.className = 'pl-6 text-[11px] font-bold text-slate-400 py-1 hover:text-slate-800 cursor-pointer'; tEl.innerHTML = `- ${t.text}`;
+            tEl.onclick = (e) => { e.stopPropagation(); openTaskModal(d.id, t.id); }; document.getElementById(pid).appendChild(tEl);
+        });
+    }
+    function moveDoc(docId, folderId) { const d = state.documents.find(doc=>doc.id===docId); if(d) d.folderId = folderId; renderSidebar(); save(); }
+
+    // Widgets & Board
+    function addWidget(type) {
+        const b = state.boards.find(bd=>bd.id===state.activeBoardId); let data = {};
+        if(type==='routine') data = {items:[{text:'Drink Water', checked:false}]};
+        if(type==='photo') data = {url:'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067', caption:'Inspiration'};
+        b.widgets.push({id:Date.now(), type, x:200, y:200, data}); renderActiveBoard(); save();
+    }
+    function renderActiveBoard() {
+        const c = document.getElementById('canvas'); c.innerHTML = '';
+        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
+        if(!b) return;
+        b.widgets.forEach(w => {
+            const el = document.createElement('div'); el.className = 'widget group'; el.style.left = w.x+'px'; el.style.top = w.y+'px';
+            let h = '';
+            if(w.type==='memo_sync') {
+                const d = state.documents.find(doc=>doc.id===w.docId);
+                if(d) h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-72 border border-slate-100">
+                    <div class="flex justify-between items-center mb-4"><h4 class="font-black text-slate-800">${d.title}</h4><button onclick="openDocModal(${d.id})" class="material-symbols-outlined text-sm text-slate-300">open_in_new</button></div>
+                    <div class="space-y-2 mb-4">${d.tasks.map(t=>`<div class="text-[11px] font-bold text-slate-400 cursor-pointer" onclick="openTaskModal(${d.id},${t.id})">- ${t.text}</div>`).join('')}</div>
+                    <button onclick="addDocTaskTo(${d.id})" class="w-full py-2 bg-slate-50 rounded-xl text-[10px] font-black text-slate-400 hover:bg-slate-100">+ QUICK TASK</button>
+                </div>`;
+            } else if(w.type==='task_sync') {
+                const d = state.documents.find(doc=>doc.id===w.docId); const t = d?.tasks.find(tk=>tk.id===w.taskId);
+                if(t) h = `<div class="bg-slate-800 text-white rounded-3xl p-6 shadow-2xl w-64 border border-slate-700">
+                    <h4 class="text-[10px] font-black opacity-40 mb-1 uppercase">${d.title}</h4><h3 class="font-black mb-3">${t.text}</h3>
+                    <p class="text-[11px] font-bold opacity-60 leading-relaxed truncated-box mb-3">${t.content || '...'}</p>
+                    ${t.images.length > 0 ? `<img src="${t.images[0]}" class="w-full h-32 object-cover rounded-xl"/>` : ''}
+                </div>`;
+            } else if(w.type==='photo') {
+                h = `<div class="bg-white p-3 pb-8 rounded shadow-xl rotate-[1deg] w-64 border border-slate-50 relative">
+                    <img src="${w.data.url}" class="w-full h-40 object-cover rounded-sm mb-3"/>
+                    <p class="text-center text-[10px] font-black text-slate-400">${w.data.caption}</p>
+                    <button onclick="changePhoto(${w.id})" class="absolute top-4 right-4 bg-white/80 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 material-symbols-outlined text-sm text-slate-800">edit</button>
+                </div>`;
+            } else if(w.type==='routine') {
+                h = `<div class="bg-white rounded-[32px] p-6 shadow-xl w-72 border border-slate-50">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-[10px] font-black text-slate-800">ROUTINE</h3><button onclick="addRoutineItem(${w.id})" class="material-symbols-outlined text-sm text-slate-300">add</button></div>
+                    <div class="flex flex-wrap gap-2">${w.data.items.map((it,i)=>`<div onclick="toggleRoutine(${w.id},${i})" class="px-3 py-1.5 rounded-xl border-2 ${it.checked ? 'bg-slate-50 border-slate-50 text-slate-300':'bg-white border-slate-50 text-slate-600'} text-[9px] font-black cursor-pointer">${it.text}</div>`).join('')}</div>
+                </div>`;
+            } else if(w.type==='calendar') {
                 const now = new Date();
-                html = `
-                    <article class="bg-white rounded-3xl p-6 shadow-floating w-64 border border-slate-50">
-                        <div class="flex justify-between items-center mb-4"><h3 class="text-[11px] font-black uppercase text-slate-400 tracking-widest">${now.toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}</h3><button onclick="deleteWidget(${w.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300 hover:text-red-400 text-sm">delete</button></div>
-                        <div class="grid grid-cols-7 gap-1 text-[10px] text-center font-black mb-3"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
-                        <div class="grid grid-cols-7 gap-1 text-[11px] text-center">
-                            ${Array.from({length: 31}, (_, i) => `<div class="${i+1 === now.getDate() ? 'bg-slate-800 text-white rounded-lg font-bold' : 'text-slate-600'} p-1">${i+1}</div>`).join('')}
-                        </div>
-                    </article>
-                `;
+                h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-64 border border-slate-50">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-[10px] font-black text-slate-800">${now.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h3><span class="text-[10px] font-black text-slate-400">TODAY: ${now.getDate()}</span></div>
+                    <div class="grid grid-cols-7 gap-1 text-[10px] text-center font-black">${['S','M','T','W','T','F','S'].map(d=>`<div class="opacity-30">${d}</div>`).join('')}${Array.from({length:31}, (_,i)=>`<div class="p-1 ${i+1===now.getDate() ? 'bg-slate-800 text-white rounded-lg' : ''}">${i+1}</div>`).join('')}</div>
+                </div>`;
             }
-            div.innerHTML = html; setupDrag(div, w); container.appendChild(div);
+            el.innerHTML = h + `<button onclick="deleteWidget(${w.id})" class="absolute -top-2 -right-2 bg-white shadow-md border border-slate-100 rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
+            setupDrag(el, w); c.appendChild(el);
         });
     }
 
-    function setupDrag(el, widget) {
-        let ox, oy; const snap = 32;
-        el.addEventListener('mousedown', (e) => {
-            if (e.target.closest('button, input')) return;
+    // Modal Helpers
+    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+    function closeTaskModal() { document.getElementById('task-modal').classList.remove('active'); }
+    function closeOnOverlay(e) { if(e.target.classList.contains('modal-overlay')) closeModals(); }
+
+    function openCreateModal() { document.getElementById('create-modal').classList.add('active'); }
+    function confirmCreateMemo() {
+        const title = document.getElementById('new-memo-title').value || 'Untitled'; const fid = document.getElementById('new-memo-folder').value;
+        const id = Date.now(); state.documents.push({ id, title, folderId: fid==='none' ? 'none' : Number(fid), tasks: [] });
+        const b = state.boards.find(bd=>bd.id===state.activeBoardId); b.widgets.push({ id: Date.now(), type: 'memo_sync', x: 100, y: 100, docId: id });
+        closeModals(); renderSidebar(); renderActiveBoard(); save();
+    }
+    function openDocModal(id) { state.currentDocId = id; const d = state.documents.find(doc=>doc.id===id); document.getElementById('doc-title').value = d.title; renderDocTasks(d); document.getElementById('doc-modal').classList.add('active'); }
+    function renderDocTasks(d) {
+        const list = document.getElementById('doc-tasks-list'); list.innerHTML = '';
+        d.tasks.forEach(t => {
+            const div = document.createElement('div'); div.className = 'flex items-center gap-3 bg-slate-50 p-4 rounded-2xl group cursor-pointer';
+            div.innerHTML = `<div class="flex-1 font-bold text-slate-800">${t.text}</div><button onclick="event.stopPropagation(); deleteTask(${t.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300">delete</button>`;
+            div.onclick = () => openTaskModal(d.id, t.id); list.appendChild(div);
+        });
+    }
+    function addDocTaskTo(id) { state.currentDocId = id; addDocTask(); }
+    function addDocTask() {
+        const d = state.documents.find(doc=>doc.id===state.currentDocId); d.tasks.push({ id: Date.now(), text: 'New Task', content: '', showOnBoard: false, images: [] });
+        if(document.getElementById('doc-modal').classList.contains('active')) renderDocTasks(d);
+        renderSidebar(); renderActiveBoard(); save();
+    }
+    function openTaskModal(did, tid) {
+        state.currentDocId = did; state.currentTaskId = tid; const d = state.documents.find(doc=>doc.id===did); const t = d.tasks.find(tk=>tk.id===tid);
+        document.getElementById('task-detail-name').value = t.text; document.getElementById('task-detail-content').value = t.content;
+        document.getElementById('task-dashboard-sync').checked = t.showOnBoard; renderTaskImages(t); document.getElementById('task-modal').classList.add('active');
+    }
+    function addTaskImage() {
+        const url = prompt("Image URL:"); if(!url) return;
+        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId);
+        t.images.push(url); renderTaskImages(t); renderActiveBoard(); save();
+    }
+    function renderTaskImages(t) {
+        const container = document.getElementById('task-images'); container.innerHTML = '';
+        t.images.forEach((img, i) => {
+            const div = document.createElement('div'); div.className = 'relative group';
+            div.innerHTML = `<img src="${img}" class="w-full h-32 object-cover rounded-xl"/><button onclick="deleteTaskImage(${i})" class="absolute top-2 right-2 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
+            container.appendChild(div);
+        });
+    }
+    function deleteTaskImage(i) {
+        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId);
+        t.images.splice(i, 1); renderTaskImages(t); renderActiveBoard(); save();
+    }
+    function updateTaskDetailName(v) { const d = state.documents.find(doc=>doc.id===state.currentDocId); d.tasks.find(tk=>tk.id===state.currentTaskId).text = v; renderDocTasks(d); renderSidebar(); renderActiveBoard(); save(); }
+    function updateTaskDetailContent(v) { state.documents.find(doc=>doc.id===state.currentDocId).tasks.find(tk=>tk.id===state.currentTaskId).content = v; renderActiveBoard(); save(); }
+    function toggleTaskSync(c) {
+        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId); t.showOnBoard = c;
+        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
+        if(c) { if(!b.widgets.find(w=>w.taskId===t.id)) b.widgets.push({ id: Date.now(), type: 'task_sync', x: 200, y: 200, taskId: t.id, docId: d.id }); }
+        else { b.widgets = b.widgets.filter(w=>w.taskId!==t.id); }
+        renderActiveBoard(); save();
+    }
+
+    // General Helpers
+    function setupDrag(el, w) {
+        let ox, oy; el.addEventListener('mousedown', (e) => {
+            if(e.target.closest('button, input, textarea, select')) return;
             ox = e.clientX - el.offsetLeft; oy = e.clientY - el.offsetTop;
-            const move = (me) => {
-                let x = Math.round((me.clientX - ox) / snap) * snap;
-                let y = Math.round((me.clientY - oy) / snap) * snap;
-                el.style.left = x + 'px'; el.style.top = y + 'px'; widget.x = x; widget.y = y;
-            };
+            const move = (me) => { el.style.left=(Math.round((me.clientX-ox)/32)*32)+'px'; el.style.top=(Math.round((me.clientY-oy)/32)*32)+'px'; w.x=parseInt(el.style.left); w.y=parseInt(el.style.top); };
             const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
             document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
         });
     }
+    function deleteWidget(id) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); b.widgets = b.widgets.filter(w=>w.id!==id); renderActiveBoard(); save(); }
+    function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
+    function changePhoto(id) { const url = prompt("New Image URL:"); if(url) { state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===id).data.url = url; renderActiveBoard(); save(); } }
+    function addRoutineItem(id) { const t = prompt("Task:"); if(t) { state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===id).data.items.push({text:t, checked:false}); renderActiveBoard(); save(); } }
+    function toggleRoutine(wid, idx) { const w = state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===wid); w.data.items[idx].checked = !w.data.items[idx].checked; renderActiveBoard(); save(); }
+    function updateClock() { const n = new Date(); document.getElementById('header-date').textContent = n.toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'}); document.getElementById('header-time').textContent = n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+    function showContextMenu(x,y,id) { contextId=id; const m=document.getElementById('context-menu'); m.style.left=x+'px'; m.style.top=y+'px'; m.style.display='block'; const hide=()=>{m.style.display='none'; document.removeEventListener('click',hide);}; setTimeout(()=>document.addEventListener('click',hide),10); }
+    function renameBoardRequest() { const tabs = document.querySelectorAll('.board-tab'); tabs.forEach(t => { if(t.innerText.includes(state.boards.find(b=>b.id===contextId).name)) startRename(t, contextId); }); }
+    function favoriteBoard() { const b=state.boards.find(b=>b.id===contextId); b.isFavorite=!b.isFavorite; renderBoardTabs(); save(); }
+    function deleteBoard() { if(state.boards.length<=1)return; state.boards=state.boards.filter(b=>b.id!==contextId); if(state.activeBoardId===contextId)state.activeBoardId=state.boards[0].id; renderBoardTabs(); renderActiveBoard(); save(); }
 
-    function deleteWidget(id) { state.widgets = state.widgets.filter(w => w.id !== id); renderWidgets(); save(); }
-    function updateWidgetData(id, d) { const w = state.widgets.find(w => w.id === id); if (w) { w.data = { ...w.data, ...d }; save(); } }
-    function addItem(id) { const input = document.getElementById(`add-item-${id}`); if (!input.value.trim()) return; const w = state.widgets.find(w => w.id === id); w.data.items.push({ text: input.value, checked: false }); input.value = ''; renderWidgets(); save(); updateNaro(); }
-    function addRoutineItem(id) { const t = prompt("Routine:"); if (!t) return; const w = state.widgets.find(w => w.id === id); w.data.items.push({ text: t, checked: false }); renderWidgets(); save(); updateNaro(); }
-    function toggleItem(wid, idx) { const w = state.widgets.find(w => w.id === wid); w.data.items[idx].checked = !w.data.items[idx].checked; renderWidgets(); save(); updateNaro(); if (w.data.items[idx].checked) showNaroMessage(NARO_TONES[state.mode].happy[Math.floor(Math.random()*3)]); }
-    function changePhoto(id) { const url = prompt("Photo URL:"); if (url) updateWidgetData(id, { url }); renderWidgets(); }
-
-    function updateNaro() {
-        let total = 0, checked = 0;
-        state.widgets.forEach(w => { if (w.data.items) { w.data.items.forEach(i => { total++; if (i.checked) checked++; }); } });
-        const pct = total === 0 ? 100 : (checked / total) * 100;
-        const badge = document.getElementById('achievement-badge');
-        if (pct >= 80) { badge.textContent = '✨'; badge.style.background = '#334155'; }
-        else if (pct < 30 && total > 2) { badge.textContent = '💢'; badge.style.background = '#e11d48'; }
-        else { badge.textContent = '!'; badge.style.background = '#64748b'; }
-    }
-    function showNaroMessage(msg) { document.getElementById('naro-speech').textContent = msg; }
     init();
 </script>
 </body>
