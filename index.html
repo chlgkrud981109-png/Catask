@@ -1,756 +1,427 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Groundwork</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
-:root{
-  --bg:#f7f9fb;--white:#fff;--border:#e2e8ed;--border2:#cdd5db;
-  --text:#2c3437;--sub:#596064;--muted:#9ba5aa;
-  --primary:#545f74;--primary-light:#dde5f5;
-  --col-todo:#F2F4F6;--col-prog:#FFF4E5;--col-done:#E8F5E9;--col-block:#FFE9E9;
-  --red:#a83836;--green:#22c55e;--amber:#f59e0b;
-}
-body{background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>NaroTask - Workspace</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#334155",
+                        "primary-container": "#f1f5f9",
+                        "on-primary": "#ffffff",
+                        "background": "#fafafa",
+                        "surface": "#ffffff",
+                        "tertiary": "#64748b",
+                        "accent": "#94a3b8"
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #fafafa;
+            --dot-color: rgba(0,0,0,0.1);
+        }
+        body { 
+            background-color: var(--bg-color); 
+            user-select: none; 
+            transition: background-color 0.4s ease;
+        }
+        
+        /* Pegboard Concept */
+        #canvas {
+            position: relative; width: 4000px; height: 4000px;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+            background-size: 32px 32px;
+            transition: background-color 0.4s ease, background-image 0.4s ease;
+        }
 
-/* ── 헤더 ── */
-header{
-  height:56px;padding:0 24px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--white);border-bottom:1px solid var(--border);
-  flex-shrink:0;position:sticky;top:0;z-index:50;
-}
-.logo-area{display:flex;align-items:center;gap:10px;}
-.mascot-wrap{position:relative;cursor:pointer;}
-.mascot-img{
-  width:36px;height:36px;border-radius:50%;object-fit:cover;
-  border:2px solid var(--border);transition:filter .3s,border-color .3s;
-}
-.mascot-badge{
-  position:absolute;bottom:-2px;right:-2px;
-  font-size:10px;line-height:1;display:none;
-}
-.logo-text{font-size:16px;font-weight:700;color:var(--primary);letter-spacing:-.3px;}
-.hdr-date{font-size:12px;color:var(--muted);font-weight:500;}
-.hdr-right{display:flex;align-items:center;gap:14px;}
-.prog-wrap{display:flex;align-items:center;gap:8px;}
-.prog-bar-bg{width:88px;height:5px;background:#e2e8ed;border-radius:3px;overflow:hidden;}
-.prog-bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .4s;}
-.prog-txt{font-size:12px;color:var(--sub);font-weight:500;min-width:36px;}
-.btn-new{
-  padding:7px 14px;background:var(--primary);color:#fff;
-  border:none;border-radius:8px;font-size:13px;font-weight:600;
-  cursor:pointer;display:flex;align-items:center;gap:5px;transition:opacity .15s;
-}
-.btn-new:hover{opacity:.85;}
-.btn-new-icon{font-size:16px;line-height:1;}
+        /* Widgets & Shadows */
+        .shadow-memo { box-shadow: 4px 4px 0px 0px rgba(51,65,85,0.1); }
+        .shadow-floating { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); }
+        
+        .magnetic-tape {
+            position: absolute; top: -10px; left: 50%;
+            transform: translateX(-50%) rotate(-1deg);
+            width: 44px; height: 18px;
+            background-color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(0,0,0,0.03);
+            backdrop-filter: blur(2px);
+            z-index: 10;
+        }
 
-/* ── 보드 ── */
-.board{
-  flex:1;display:flex;gap:16px;padding:20px;
-  overflow-x:auto;overflow-y:hidden;align-items:flex-start;
-}
-.board::-webkit-scrollbar{height:4px;}
-.board::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+        .naro-checkbox {
+            appearance: none; width: 20px; height: 20px;
+            border: 2px solid #cbd5e1; border-radius: 6px;
+            outline: none; cursor: pointer; position: relative;
+            background-color: #ffffff; transition: all 0.2s;
+        }
+        .naro-checkbox:checked { background-color: #334155; border-color: #334155; }
+        .naro-checkbox:checked::after {
+            content: '✔'; position: absolute; color: white;
+            font-size: 11px; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
 
-/* ── 컬럼 ── */
-.col{
-  width:280px;flex-shrink:0;display:flex;flex-direction:column;
-  border-radius:14px;overflow:hidden;
-  max-height:calc(100vh - 96px);
-}
-.col-todo{background:var(--col-todo);}
-.col-prog{background:var(--col-prog);}
-.col-done{background:var(--col-done);}
-.col-block{background:var(--col-block);}
+        .widget { position: absolute; cursor: grab; touch-action: none; transition: transform 0.1s; }
+        .widget:active { cursor: grabbing; transform: scale(1.01); z-index: 1000 !important; }
 
-.col-head{
-  padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:5;
-}
-.col-todo .col-head{background:var(--col-todo);}
-.col-prog .col-head{background:var(--col-prog);}
-.col-done .col-head{background:var(--col-done);}
-.col-block .col-head{background:var(--col-block);}
+        /* Settings Drawer */
+        #settings-drawer {
+            position: fixed; top: 0; right: -360px; width: 360px; height: 100vh;
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+            z-index: 100; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+        }
+        #settings-drawer.open { right: 0; }
 
-.col-title-wrap{display:flex;align-items:center;gap:5px;}
-.col-title{font-size:13px;font-weight:700;color:var(--text);}
-.col-block-icon{font-size:13px;color:var(--red);}
-.col-cnt{
-  background:var(--white);color:var(--sub);
-  font-size:11px;font-weight:700;
-  padding:2px 7px;border-radius:20px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06);
-}
+        .mode-pill {
+            display: flex; background: #f1f5f9; padding: 4px; border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .mode-btn {
+            padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
+            transition: all 0.3s; color: #64748b;
+        }
+        .mode-btn.active { background: #ffffff; color: #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-.col-body{
-  flex:1;overflow-y:auto;padding:0 10px;
-  display:flex;flex-direction:column;gap:8px;
-}
-.col-body::-webkit-scrollbar{width:3px;}
-.col-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-.col-body.drag-over{
-  outline:2px dashed var(--border2);
-  outline-offset:-4px;border-radius:8px;
-}
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(15px); }
+        #onboarding { display: none; }
+        #onboarding.active { display: flex; }
 
-/* 빈 상태 */
-.col-empty{
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:20px;gap:6px;opacity:.4;
-}
-.col-empty-img{width:32px;height:32px;border-radius:50%;object-fit:cover;}
-.col-empty-txt{font-size:11px;color:var(--muted);}
-
-/* 추가 버튼 */
-.col-add{
-  margin:6px 10px 10px;padding:8px;
-  border:1.5px dashed var(--border2);border-radius:10px;
-  background:transparent;color:var(--muted);
-  font-size:12px;font-weight:500;cursor:pointer;
-  transition:all .15s;
-}
-.col-add:hover{border-color:var(--border2);color:var(--sub);background:rgba(255,255,255,.5);}
-
-/* ── 카드 ── */
-.card{
-  background:var(--white);border-radius:12px;padding:12px;
-  border:1px solid rgba(0,0,0,.06);
-  box-shadow:0 1px 6px rgba(44,52,55,.06);
-  cursor:pointer;position:relative;
-  transition:transform .15s,box-shadow .15s;
-  animation:cardIn .2s ease both;
-}
-.card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(44,52,55,.1);}
-.card.dragging{opacity:.3;transform:scale(.97);}
-.prog-line{
-  position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--primary),#7b9cde);
-  border-radius:12px 12px 0 0;
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
-.card-tag{
-  font-size:10px;font-weight:600;padding:2px 8px;
-  border-radius:20px;letter-spacing:.3px;
-}
-.tag-Design{background:#dde8ff;color:#3a4e8c;}
-.tag-Dev{background:#dde5f5;color:#3b4d6b;}
-.tag-Content{background:#e8deff;color:#4d3a7c;}
-.tag-Infra{background:#ffdede;color:#7c2a2a;}
-.tag-Research{background:#e0e6ea;color:#495760;}
-.tag-Meeting{background:#fdecd0;color:#8c5c1a;}
-
-.card-open-btn{
-  opacity:0;background:var(--bg);border:1px solid var(--border);
-  border-radius:5px;width:22px;height:22px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:12px;color:var(--sub);
-  transition:all .15s;flex-shrink:0;
-}
-.card:hover .card-open-btn{opacity:1;}
-.card-open-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
-
-.card-title{
-  font-size:13px;font-weight:600;color:var(--text);
-  line-height:1.45;margin-bottom:6px;
-}
-.card-title.done-title{text-decoration:line-through;color:var(--muted);}
-.card-notes{
-  font-size:11px;color:var(--sub);line-height:1.5;
-  margin-bottom:6px;
-  overflow:hidden;display:-webkit-box;
-  -webkit-line-clamp:2;-webkit-box-orient:vertical;
-}
-.card-footer{
-  display:flex;align-items:center;
-  margin-top:6px;padding-top:6px;
-  border-top:1px solid rgba(0,0,0,.05);
-}
-.card-prio-high{font-size:11px;font-weight:600;color:var(--red);display:flex;align-items:center;gap:3px;}
-.card-done-badge{font-size:11px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:3px;margin-left:auto;}
-
-/* ── 패널 ── */
-.panel-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.2);
-  z-index:100;display:flex;justify-content:flex-end;
-  opacity:0;pointer-events:none;transition:opacity .2s;
-  backdrop-filter:blur(3px);
-}
-.panel-overlay.show{opacity:1;pointer-events:all;}
-.panel{
-  width:380px;height:100%;background:var(--white);
-  border-left:1px solid var(--border);
-  display:flex;flex-direction:column;
-  transform:translateX(16px);transition:transform .25s;
-  box-shadow:-8px 0 32px rgba(0,0,0,.08);
-}
-.panel-overlay.show .panel{transform:translateX(0);}
-.panel-head{
-  padding:16px 20px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;
-}
-.panel-close{
-  width:28px;height:28px;border-radius:7px;
-  border:1px solid var(--border);background:transparent;
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;cursor:pointer;color:var(--sub);transition:all .15s;
-}
-.panel-close:hover{background:var(--bg);color:var(--text);}
-.panel-title-input{
-  flex:1;border:none;background:transparent;
-  font-size:15px;font-weight:600;color:var(--text);outline:none;
-}
-.panel-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:18px;}
-.panel-body::-webkit-scrollbar{width:3px;}
-.p-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
-.chip-row{display:flex;flex-wrap:wrap;gap:5px;}
-.chip{
-  padding:5px 12px;border:1.5px solid var(--border);
-  border-radius:8px;font-size:12px;font-weight:500;
-  cursor:pointer;background:transparent;color:var(--sub);
-  transition:all .15s;
-}
-.chip:hover{border-color:var(--border2);color:var(--text);}
-.chip.sel{border-color:var(--primary);background:var(--primary-light);color:var(--primary);}
-.panel-textarea{
-  width:100%;min-height:100px;background:var(--bg);
-  border:1.5px solid var(--border);border-radius:10px;
-  padding:10px 12px;font-size:13px;color:var(--text);
-  outline:none;resize:none;line-height:1.6;transition:border-color .15s;
-}
-.panel-textarea:focus{border-color:var(--border2);}
-.panel-foot{
-  padding:12px 20px;border-top:1px solid var(--border);
-  display:flex;justify-content:flex-end;
-}
-.btn-delete{
-  padding:6px 14px;border:1.5px solid var(--border);
-  background:transparent;border-radius:8px;
-  font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;
-}
-.btn-delete:hover{border-color:#f8c8c8;background:#fff0f0;color:var(--red);}
-
-/* ── 퀵 모달 ── */
-.quick-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.15);
-  z-index:200;display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .15s;
-  backdrop-filter:blur(2px);
-}
-.quick-overlay.show{opacity:1;pointer-events:all;}
-.quick-modal{
-  background:var(--white);border:1.5px solid var(--border);
-  border-radius:16px;padding:20px;width:340px;
-  box-shadow:0 24px 60px rgba(0,0,0,.12);
-  transform:translateY(8px) scale(.97);transition:transform .18s;
-}
-.quick-overlay.show .quick-modal{transform:translateY(0) scale(1);}
-.quick-header{display:flex;align-items:center;gap:7px;margin-bottom:12px;}
-.quick-dot{width:8px;height:8px;border-radius:50%;}
-.quick-label{font-size:12px;font-weight:600;color:var(--sub);}
-.quick-input{
-  width:100%;background:var(--bg);border:1.5px solid var(--border);
-  border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);
-  outline:none;margin-bottom:12px;transition:border-color .15s;
-}
-.quick-input:focus{border-color:var(--border2);}
-.quick-actions{display:flex;justify-content:flex-end;gap:6px;}
-.btn-cancel{
-  padding:7px 14px;border:1.5px solid var(--border);
-  background:transparent;border-radius:8px;
-  font-size:12px;color:var(--sub);cursor:pointer;transition:all .15s;
-}
-.btn-cancel:hover{background:var(--bg);}
-.btn-add{
-  padding:7px 16px;border:none;background:var(--primary);
-  border-radius:8px;font-size:12px;color:#fff;font-weight:600;
-  cursor:pointer;transition:opacity .15s;
-}
-.btn-add:hover{opacity:.85;}
-
-/* 마스코트 애니메이션 */
-@keyframes mbounce{0%,100%{transform:scale(1) rotate(0)}40%{transform:scale(1.25) rotate(-6deg)}70%{transform:scale(1.1) rotate(4deg)}}
-@keyframes mshake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
-.m-bounce{animation:mbounce .45s cubic-bezier(.34,1.56,.64,1);}
-.m-shake{animation:mshake .35s ease;}
-</style>
+        /* Color Inputs */
+        input[type="color"] {
+            -webkit-appearance: none; border: none; width: 32px; height: 32px;
+            border-radius: 50%; cursor: pointer; overflow: hidden;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+    </style>
 </head>
-<body>
+<body class="bg-background text-slate-800 font-['Plus_Jakarta_Sans'] overflow-hidden">
 
-<!-- 헤더 -->
-<header>
-  <div class="logo-area">
-    <div class="mascot-wrap" id="mascot-wrap">
-      <img class="mascot-img" id="mascot-img" src="" alt="mascot" />
-      <div class="mascot-badge" id="mascot-badge"></div>
+<nav class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/60 bg-white flex flex-col py-6 gap-2 z-40 hidden md:flex">
+    <div class="px-6 pb-6 mb-2 border-b border-slate-100 flex items-center gap-3">
+        <h1 class="text-xl font-black text-slate-800 tracking-tight">NaroTask</h1>
     </div>
-    <span class="logo-text">Groundwork</span>
-    <span class="hdr-date" id="hdr-date"></span>
-  </div>
-  <div class="hdr-right">
-    <div class="prog-wrap">
-      <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
-      <span class="prog-txt" id="prog-txt">0 / 0</span>
+    <div class="flex-1 flex flex-col gap-1 overflow-y-auto pt-4">
+        <a class="bg-slate-100 text-slate-900 rounded-xl px-4 py-3 mx-4 text-sm flex items-center gap-3 font-bold shadow-sm" href="#">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dashboard</span> Board
+        </a>
     </div>
-    <button class="btn-new" onclick="openQuick('todo')">
-      <span class="btn-new-icon">+</span> New Task
-    </button>
-  </div>
-</header>
+    <div class="px-4 mt-auto flex flex-col gap-3 pt-4 border-t border-slate-50">
+        <button onclick="addWidget('memo')" class="w-full bg-slate-800 text-white hover:bg-slate-700 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95">
+            <span class="material-symbols-outlined text-sm">push_pin</span> Add Memo
+        </button>
+        <button onclick="addWidget('routine')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <span class="material-symbols-outlined text-sm">cycle</span> Daily Routine
+        </button>
+        <button onclick="addWidget('photo')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <span class="material-symbols-outlined text-sm">image</span> Add Photo
+        </button>
+        <button onclick="addWidget('calendar')" class="w-full bg-white text-slate-800 border-2 border-slate-100 hover:border-slate-200 transition-all py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <span class="material-symbols-outlined text-sm">calendar_month</span> Add Calendar
+        </button>
+    </div>
+</nav>
 
-<!-- 보드 -->
-<div class="board">
-  <!-- To Do -->
-  <div class="col col-todo">
-    <div class="col-head">
-      <div class="col-title-wrap"><span class="col-title">To Do</span></div>
-      <span class="col-cnt" id="cnt-todo">0</span>
+<main class="flex-1 ml-0 md:ml-64 flex flex-col h-screen relative overflow-hidden">
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 flex justify-between items-center w-full px-8 py-4 sticky top-0 z-30">
+        <div class="mode-pill">
+            <button onclick="setMode('work')" class="mode-btn" id="btn-work">Work</button>
+            <button onclick="setMode('study')" class="mode-btn" id="btn-study">Study</button>
+            <button onclick="setMode('personal')" class="mode-btn" id="btn-personal">Personal</button>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right mr-2 hidden sm:block">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" id="header-date"></p>
+                <p class="text-xl font-black text-slate-800" id="header-time"></p>
+            </div>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-slate-800 hover:bg-slate-50 p-2 rounded-xl transition-all active:rotate-45">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+            <img class="w-10 h-10 rounded-2xl object-cover border-2 border-white shadow-sm cursor-pointer" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop" />
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-auto" id="canvas-container">
+        <div id="canvas">
+            <!-- Widgets injected here -->
+        </div>
     </div>
-    <div class="col-body" id="body-todo" data-col="todo"></div>
-    <button class="col-add" onclick="openQuick('todo')">+ Add card</button>
-  </div>
-  <!-- In Progress -->
-  <div class="col col-prog">
-    <div class="col-head">
-      <div class="col-title-wrap"><span class="col-title">In Progress</span></div>
-      <span class="col-cnt" id="cnt-prog">0</span>
+</main>
+
+<!-- Settings Drawer -->
+<div id="settings-drawer" class="shadow-2xl">
+    <div class="p-8 border-b border-slate-100 flex justify-between items-center">
+        <h2 class="text-xl font-black text-slate-800">Workspace Settings</h2>
+        <button onclick="toggleSettings()" class="material-symbols-outlined text-slate-400 hover:text-slate-800">close</button>
     </div>
-    <div class="col-body" id="body-prog" data-col="prog"></div>
-    <button class="col-add" onclick="openQuick('prog')">+ Add card</button>
-  </div>
-  <!-- Blocked -->
-  <div class="col col-block">
-    <div class="col-head">
-      <div class="col-title-wrap">
-        <span class="col-block-icon">⊘</span>
-        <span class="col-title">Blocked</span>
-      </div>
-      <span class="col-cnt" id="cnt-block">0</span>
+    
+    <div class="p-8 overflow-y-auto flex-1 flex flex-col gap-8">
+        <!-- BG Presets -->
+        <div>
+            <label class="text-[11px] font-black text-slate-400 uppercase mb-4 block">Background Presets</label>
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="applyTheme('#ffffff', 'rgba(0,0,0,0.08)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#ffffff]"></button>
+                <button onclick="applyTheme('#f8fafc', 'rgba(0,0,0,0.06)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#f8fafc]"></button>
+                <button onclick="applyTheme('#f1f5f9', 'rgba(0,0,0,0.1)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#f1f5f9]"></button>
+                <button onclick="applyTheme('#fef3c7', 'rgba(0,0,0,0.05)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#fef3c7]"></button>
+                <button onclick="applyTheme('#334155', 'rgba(255,255,255,0.1)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#334155]"></button>
+                <button onclick="applyTheme('#1e293b', 'rgba(255,255,255,0.08)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#1e293b]"></button>
+                <button onclick="applyTheme('#0f172a', 'rgba(255,255,255,0.06)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#0f172a]"></button>
+                <button onclick="applyTheme('#020617', 'rgba(255,255,255,0.15)')" class="w-full aspect-square rounded-xl border-2 border-slate-100 bg-[#020617]"></button>
+            </div>
+        </div>
+
+        <!-- Custom Background -->
+        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+            <div>
+                <label class="text-xs font-black text-slate-800 block">Custom Background</label>
+                <span class="text-[10px] text-slate-400 font-bold" id="bg-hex">#fafafa</span>
+            </div>
+            <input type="color" id="bg-picker" oninput="updateBg(this.value)"/>
+        </div>
+
+        <!-- Custom Dots -->
+        <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+            <div>
+                <label class="text-xs font-black text-slate-800 block">Dot Color (타공판 점)</label>
+                <span class="text-[10px] text-slate-400 font-bold" id="dot-hex">rgba(0,0,0,0.1)</span>
+            </div>
+            <input type="color" id="dot-picker" oninput="updateDots(this.value)"/>
+        </div>
     </div>
-    <div class="col-body" id="body-block" data-col="block"></div>
-    <button class="col-add" onclick="openQuick('block')">+ Add card</button>
-  </div>
-  <!-- Done -->
-  <div class="col col-done">
-    <div class="col-head">
-      <div class="col-title-wrap"><span class="col-title">Done</span></div>
-      <span class="col-cnt" id="cnt-done">0</span>
+
+    <div class="p-8 border-t border-slate-100 bg-slate-50/50">
+        <p class="text-[10px] text-slate-300 font-black uppercase tracking-widest">NaroTask v2.1 Professional</p>
     </div>
-    <div class="col-body" id="body-done" data-col="done"></div>
-    <button class="col-add" onclick="openQuick('done')">+ Add card</button>
-  </div>
 </div>
 
-<!-- 상세 패널 -->
-<div class="panel-overlay" id="panel-overlay">
-  <div class="panel">
-    <div class="panel-head">
-      <button class="panel-close" onclick="closePanel()">×</button>
-      <input class="panel-title-input" id="panel-title" placeholder="Card title" />
+<!-- Naro Toast -->
+<div id="naro-toast" class="fixed bottom-8 right-8 flex items-end gap-3 z-50">
+    <div class="bg-white/90 backdrop-blur-lg text-slate-800 p-5 rounded-3xl rounded-br-none shadow-2xl border border-slate-100 max-w-[240px] relative mb-6">
+        <p class="text-sm font-bold leading-relaxed" id="naro-speech">오늘도 멋진 하루를 만들어봐!</p>
+        <div class="absolute -bottom-2 right-0 w-4 h-4 bg-white/90 border-b border-r border-slate-100 transform rotate-45 translate-x-1/2 -translate-y-1/2"></div>
     </div>
-    <div class="panel-body">
-      <div>
-        <div class="p-label">Status</div>
-        <div class="chip-row" id="p-status"></div>
-      </div>
-      <div>
-        <div class="p-label">Priority</div>
-        <div class="chip-row" id="p-prio"></div>
-      </div>
-      <div>
-        <div class="p-label">Tag</div>
-        <div class="chip-row" id="p-tags"></div>
-      </div>
-      <div>
-        <div class="p-label">Notes</div>
-        <textarea class="panel-textarea" id="p-notes" placeholder="Key points, links, blockers..."></textarea>
-      </div>
+    <div class="relative w-32 h-32 flex items-center justify-center">
+        <img id="naro-img" src="naro_basic.png" class="w-full h-full object-contain scale-110" onerror="this.src='https://cdn-icons-png.flaticon.com/512/616/616408.png'" />
+        <div id="achievement-badge" class="absolute top-2 right-2 bg-slate-800 text-white text-[10px] font-black w-7 h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white">!</div>
     </div>
-    <div class="panel-foot">
-      <button class="btn-delete" id="btn-delete">Delete card</button>
-    </div>
-  </div>
 </div>
 
-<!-- 퀵 추가 -->
-<div class="quick-overlay" id="quick-overlay">
-  <div class="quick-modal">
-    <div class="quick-header">
-      <div class="quick-dot" id="q-dot"></div>
-      <span class="quick-label" id="q-col-name">To Do</span>
+<!-- Onboarding -->
+<div id="onboarding" class="fixed inset-0 z-[100] glass flex items-center justify-center p-6">
+    <div class="bg-white rounded-[40px] shadow-2xl p-10 max-w-md w-full border border-slate-100 text-center">
+        <h2 class="text-3xl font-black text-slate-800 mb-2">반가워! 난 나로야.</h2>
+        <p class="text-slate-400 mb-10 font-bold text-sm">어떤 환경에서 함께해볼까?</p>
+        <div class="grid gap-4">
+            <button onclick="finishOnboarding('work')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
+                <span>💼 업무 효율 중심</span><span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            <button onclick="finishOnboarding('study')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
+                <span>📚 열공 모드</span><span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            <button onclick="finishOnboarding('personal')" class="p-5 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 text-slate-800 font-black transition-all flex items-center justify-between">
+                <span>🏠 나만의 공간</span><span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
     </div>
-    <input class="quick-input" id="quick-input" placeholder="What needs to be done?" />
-    <div class="quick-actions">
-      <button class="btn-cancel" onclick="closeQuick()">Cancel</button>
-      <button class="btn-add" onclick="addCard()">Add Card</button>
-    </div>
-  </div>
 </div>
 
 <script>
-// ── 마스코트 이미지 (base64) ──
-var MASCOT_SRC = 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='22' r='14' fill='%23FFB347'/%3E%3Cpath d='M8 18 L12 8 L17 18Z' fill='%23FFB347'/%3E%3Cpath d='M23 18 L28 8 L32 18Z' fill='%23FFB347'/%3E%3Cpath d='M9.5 17 L12 10 L14.5 17Z' fill='%23FF8A80'/%3E%3Cpath d='M25.5 17 L28 10 L30.5 17Z' fill='%23FF8A80'/%3E%3Ccircle cx='15' cy='21' r='2.5' fill='%231a1814'/%3E%3Ccircle cx='25' cy='21' r='2.5' fill='%231a1814'/%3E%3Ccircle cx='15.8' cy='20.2' r='.8' fill='white'/%3E%3Ccircle cx='25.8' cy='20.2' r='.8' fill='white'/%3E%3Cellipse cx='20' cy='26' rx='3' ry='1.5' fill='%23FFCC80'/%3E%3Cpath d='M18.5 25 L20 26.5 L21.5 25Z' fill='%23FF8A80'/%3E%3C/svg%3E';
-document.getElementById('mascot-img').src = MASCOT_SRC;
-
-// ── 상태 ──
-var cards = [];
-var nextId = 1;
-var editingId = null;
-var quickCol = 'todo';
-var dragId = null;
-
-var COL_NAMES = {todo:'To Do', prog:'In Progress', block:'Blocked', done:'Done'};
-var COL_COLORS = {todo:'#8a95a3', prog:'#f59e0b', block:'#a83836', done:'#22c55e'};
-var TAGS = ['Design','Dev','Content','Infra','Research','Meeting'];
-var PRIOS = [{key:'high',label:'🔴 High'},{key:'med',label:'🟡 Med'},{key:'low',label:'⚪ Low'}];
-
-// ── 저장/불러오기 ──
-function save() {
-  localStorage.setItem('gw5', JSON.stringify({cards:cards, nid:nextId}));
-}
-function load() {
-  var r = localStorage.getItem('gw5');
-  if (r) {
-    try {
-      var d = JSON.parse(r);
-      cards = d.cards || [];
-      nextId = d.nid || 1;
-    } catch(e) {}
-  }
-}
-
-// ── 렌더 ──
-function render() {
-  var total = cards.length;
-  var done = cards.filter(function(c) { return c.col === 'done'; }).length;
-
-  ['todo','prog','block','done'].forEach(function(col) {
-    var body = document.getElementById('body-' + col);
-    var filtered = cards.filter(function(c) { return c.col === col; });
-
-    body.innerHTML = '';
-
-    if (filtered.length === 0) {
-      var empty = document.createElement('div');
-      empty.className = 'col-empty';
-      var eimg = document.createElement('img');
-      eimg.className = 'col-empty-img';
-      eimg.src = MASCOT_SRC;
-      var etxt = document.createElement('span');
-      etxt.className = 'col-empty-txt';
-      etxt.textContent = 'Empty';
-      empty.appendChild(eimg);
-      empty.appendChild(etxt);
-      body.appendChild(empty);
-    }
-
-    filtered.forEach(function(card) {
-      body.appendChild(makeCard(card));
-    });
-
-    document.getElementById('cnt-' + col).textContent = filtered.length;
-  });
-
-  // 진행도
-  document.getElementById('prog-txt').textContent = done + ' / ' + total;
-  document.getElementById('prog-fill').style.width = (total ? Math.round(done/total*100) : 0) + '%';
-
-  // 마스코트 표정
-  updateMascot(total, done);
-}
-
-function updateMascot(total, done) {
-  var img = document.getElementById('mascot-img');
-  var badge = document.getElementById('mascot-badge');
-  if (total === 0) {
-    img.style.filter = 'none';
-    img.style.borderColor = 'var(--border)';
-    badge.style.display = 'none';
-    return;
-  }
-  var pct = done / total;
-  if (pct >= 0.7) {
-    img.style.filter = 'brightness(1.15) saturate(1.2)';
-    img.style.borderColor = '#22c55e';
-    badge.textContent = '✨';
-    badge.style.display = 'block';
-  } else if (pct <= 0.2 && total >= 3) {
-    img.style.filter = 'saturate(1.4) brightness(.88)';
-    img.style.borderColor = '#a83836';
-    badge.textContent = '💢';
-    badge.style.display = 'block';
-  } else {
-    img.style.filter = 'none';
-    img.style.borderColor = 'var(--border)';
-    badge.textContent = '🤓';
-    badge.style.display = 'block';
-  }
-}
-
-function makeCard(card) {
-  var el = document.createElement('div');
-  el.className = 'card';
-  el.draggable = true;
-  el.dataset.id = card.id;
-
-  el.addEventListener('dragstart', function(e) {
-    dragId = card.id;
-    setTimeout(function() { el.classList.add('dragging'); }, 0);
-    e.dataTransfer.effectAllowed = 'move';
-  });
-  el.addEventListener('dragend', function() {
-    el.classList.remove('dragging');
-    dragId = null;
-    document.querySelectorAll('.col-body').forEach(function(b) {
-      b.classList.remove('drag-over');
-    });
-  });
-  el.addEventListener('click', function() { openPanel(card.id); });
-
-  // 진행 중 라인
-  if (card.col === 'prog') {
-    var line = document.createElement('div');
-    line.className = 'prog-line';
-    el.appendChild(line);
-  }
-
-  // 탑 (태그 + 열기버튼)
-  var top = document.createElement('div');
-  top.className = 'card-top';
-
-  if (card.tag) {
-    var tag = document.createElement('span');
-    tag.className = 'card-tag tag-' + card.tag;
-    tag.textContent = card.tag.toUpperCase();
-    top.appendChild(tag);
-  } else {
-    top.appendChild(document.createElement('span'));
-  }
-
-  var openBtn = document.createElement('button');
-  openBtn.className = 'card-open-btn';
-  openBtn.textContent = '↗';
-  openBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    openPanel(card.id);
-  });
-  top.appendChild(openBtn);
-  el.appendChild(top);
-
-  // 타이틀
-  var title = document.createElement('div');
-  title.className = 'card-title' + (card.col === 'done' ? ' done-title' : '');
-  title.textContent = card.title;
-  el.appendChild(title);
-
-  // 노트
-  if (card.notes) {
-    var notes = document.createElement('div');
-    notes.className = 'card-notes';
-    notes.textContent = card.notes;
-    el.appendChild(notes);
-  }
-
-  // 푸터
-  var hasFooter = card.priority === 'high' || card.col === 'done';
-  if (hasFooter) {
-    var footer = document.createElement('div');
-    footer.className = 'card-footer';
-    if (card.priority === 'high') {
-      var prio = document.createElement('div');
-      prio.className = 'card-prio-high';
-      prio.innerHTML = '⚑ High Priority';
-      footer.appendChild(prio);
-    }
-    if (card.col === 'done') {
-      var doneBadge = document.createElement('div');
-      doneBadge.className = 'card-done-badge';
-      doneBadge.innerHTML = '✓ Done';
-      footer.appendChild(doneBadge);
-    }
-    el.appendChild(footer);
-  }
-
-  return el;
-}
-
-// ── 컬럼 드래그 ──
-document.querySelectorAll('.col-body').forEach(function(body) {
-  body.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    body.classList.add('drag-over');
-  });
-  body.addEventListener('dragleave', function(e) {
-    if (!body.contains(e.relatedTarget)) {
-      body.classList.remove('drag-over');
-    }
-  });
-  body.addEventListener('drop', function(e) {
-    e.preventDefault();
-    body.classList.remove('drag-over');
-    if (!dragId) return;
-    var targetCol = body.dataset.col;
-    var card = cards.find(function(c) { return c.id === dragId; });
-    if (card && card.col !== targetCol) {
-      card.col = targetCol;
-      var mascot = document.getElementById('mascot-img');
-      if (targetCol === 'done') {
-        mascot.classList.remove('m-bounce');
-        void mascot.offsetWidth;
-        mascot.classList.add('m-bounce');
-        setTimeout(function() { mascot.classList.remove('m-bounce'); }, 450);
-      }
-      if (targetCol === 'block') {
-        mascot.classList.remove('m-shake');
-        void mascot.offsetWidth;
-        mascot.classList.add('m-shake');
-        setTimeout(function() { mascot.classList.remove('m-shake'); }, 350);
-      }
-      save();
-      render();
-      if (editingId === dragId) renderPanelStatus(card);
-    }
-  });
-});
-
-// ── 퀵 추가 ──
-function openQuick(col) {
-  quickCol = col;
-  document.getElementById('q-col-name').textContent = COL_NAMES[col];
-  document.getElementById('q-dot').style.background = COL_COLORS[col];
-  document.getElementById('quick-overlay').classList.add('show');
-  setTimeout(function() { document.getElementById('quick-input').focus(); }, 80);
-}
-function closeQuick() {
-  document.getElementById('quick-overlay').classList.remove('show');
-  document.getElementById('quick-input').value = '';
-}
-function addCard() {
-  var t = document.getElementById('quick-input').value.trim();
-  if (!t) return;
-  cards.push({id:nextId++, title:t, col:quickCol, priority:'low', tag:'', notes:''});
-  save();
-  render();
-  closeQuick();
-}
-document.getElementById('quick-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') addCard();
-  if (e.key === 'Escape') closeQuick();
-});
-document.getElementById('quick-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeQuick();
-});
-
-// ── 패널 ──
-function openPanel(id) {
-  var card = cards.find(function(c) { return c.id === id; });
-  if (!card) return;
-  editingId = id;
-  document.getElementById('panel-title').value = card.title;
-  document.getElementById('p-notes').value = card.notes || '';
-  renderPanelStatus(card);
-  renderPanelPrio(card);
-  renderPanelTags(card);
-  document.getElementById('panel-overlay').classList.add('show');
-}
-function renderPanelStatus(card) {
-  var row = document.getElementById('p-status');
-  row.innerHTML = '';
-  Object.keys(COL_NAMES).forEach(function(s) {
-    var btn = document.createElement('button');
-    btn.className = 'chip' + (card.col === s ? ' sel' : '');
-    btn.textContent = COL_NAMES[s];
-    btn.onclick = function() {
-      card.col = s;
-      save(); render(); renderPanelStatus(card);
+    let state = {
+        mode: 'study',
+        onboarded: false,
+        widgets: [],
+        lastId: 0,
+        bgColor: '#fafafa',
+        dotColor: 'rgba(0,0,0,0.1)'
     };
-    row.appendChild(btn);
-  });
-}
-function renderPanelPrio(card) {
-  var row = document.getElementById('p-prio');
-  row.innerHTML = '';
-  PRIOS.forEach(function(p) {
-    var btn = document.createElement('button');
-    btn.className = 'chip' + (card.priority === p.key ? ' sel' : '');
-    btn.textContent = p.label;
-    btn.onclick = function() {
-      card.priority = p.key;
-      save(); render(); renderPanelPrio(card);
+
+    const NARO_TONES = {
+        work: {
+            idle: ["ㅇㅇ님 이거 하하셨어요? 빨리 좀 부탁드려요~", "업무 리스트를 확인해봐요!", "화이팅입니다!"],
+            angry: ["데드라인이...! 💢", "이걸 아직도 안하셨다니요!", "빨리 처리해주셔야 해요!"],
+            happy: ["완벽한 업무 처리네요 ✨", "역시 ㅇㅇ님! 최고예요.", "오늘 퇴근 빨리 하겠는데요?"]
+        },
+        study: {
+            idle: ["ㅇㅇ야 이거 아직도 안했냐?", "열공 모드 장착! 📚", "집중하자 집중!"],
+            angry: ["딴짓 금지! 💢", "너 이러다 나중에 후회한다?", "지금 당장 공부해!"],
+            happy: ["와, 너 진짜 열심히 한다! ✨", "똑똑해지는 소리가 들려!", "기특해 기특해!"]
+        },
+        personal: {
+            idle: ["소소한 일상의 기록.", "오늘 하루는 어땠나요?", "나만의 속도로 가봐요."],
+            angry: ["조금 더 부지런히 남겨볼까요?", "기록이 멈춰있어요.", "잠시 짬을 내어 적어봐요."],
+            happy: ["참 좋은 하루네요! ✨", "기록이 모여 추억이 돼요.", "정말 수고했어요!"]
+        }
     };
-    row.appendChild(btn);
-  });
-}
-function renderPanelTags(card) {
-  var row = document.getElementById('p-tags');
-  row.innerHTML = '';
-  TAGS.forEach(function(t) {
-    var btn = document.createElement('button');
-    btn.className = 'chip' + (card.tag === t ? ' sel' : '');
-    btn.textContent = t;
-    btn.onclick = function() {
-      card.tag = (card.tag === t) ? '' : t;
-      save(); render(); renderPanelTags(card);
-    };
-    row.appendChild(btn);
-  });
-}
-function closePanel() {
-  if (editingId) {
-    var card = cards.find(function(c) { return c.id === editingId; });
-    if (card) {
-      card.title = document.getElementById('panel-title').value.trim() || card.title;
-      card.notes = document.getElementById('p-notes').value;
-      save(); render();
+
+    function init() {
+        const saved = localStorage.getItem('naro_v2.1_state');
+        if (saved) state = JSON.parse(saved);
+        
+        if (!state.onboarded) {
+            document.getElementById('onboarding').classList.add('active');
+        } else {
+            setMode(state.mode);
+            applyTheme(state.bgColor, state.dotColor);
+            renderWidgets();
+            updateNaro();
+        }
+        setInterval(updateClock, 1000); updateClock();
     }
-  }
-  editingId = null;
-  document.getElementById('panel-overlay').classList.remove('show');
-}
-document.getElementById('panel-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closePanel();
-});
-document.getElementById('btn-delete').addEventListener('click', function() {
-  if (!editingId) return;
-  cards = cards.filter(function(c) { return c.id !== editingId; });
-  save(); render(); closePanel();
-});
 
-// ── 마스코트 클릭 ──
-document.getElementById('mascot-wrap').addEventListener('click', function() {
-  var m = document.getElementById('mascot-img');
-  m.classList.remove('m-bounce');
-  void m.offsetWidth;
-  m.classList.add('m-bounce');
-  setTimeout(function() { m.classList.remove('m-bounce'); }, 450);
-});
+    function save() { localStorage.setItem('naro_v2.1_state', JSON.stringify(state)); }
 
-// ── 날짜 ──
-function setDate() {
-  var now = new Date();
-  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('hdr-date').textContent =
-    days[now.getDay()] + ' ' + months[now.getMonth()] + ' ' + now.getDate();
-}
+    function finishOnboarding(mode) {
+        state.mode = mode; state.onboarded = true;
+        addWidget('memo', 120, 100, { title: '환영해!', items: [{ text: '첫 번째 할 일', checked: false }] });
+        addWidget('calendar', 450, 100);
+        document.getElementById('onboarding').classList.remove('active');
+        setMode(mode); save(); renderWidgets(); updateNaro();
+    }
 
-// ── 키보드 ──
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closePanel(); closeQuick(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault(); openQuick('todo');
-  }
-});
+    function setMode(mode) {
+        state.mode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.id === `btn-${mode}`));
+        updateNaro(); save();
+    }
 
-// ── 초기화 ──
-load();
-setDate();
-render();
+    function applyTheme(bg, dot) {
+        state.bgColor = bg; state.dotColor = dot;
+        document.documentElement.style.setProperty('--bg-color', bg);
+        document.documentElement.style.setProperty('--dot-color', dot);
+        document.getElementById('bg-hex').textContent = bg;
+        document.getElementById('dot-hex').textContent = dot;
+        document.getElementById('bg-picker').value = bg.startsWith('rgba') ? '#ffffff' : bg;
+        save();
+    }
+
+    function updateBg(color) { applyTheme(color, state.dotColor); }
+    function updateDots(color) { applyTheme(state.bgColor, color); }
+    function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('header-date').textContent = now.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+        document.getElementById('header-time').textContent = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+
+    // Widgets
+    function addWidget(type, x = 100, y = 100, data = null) {
+        state.lastId++;
+        state.widgets.push({ id: state.lastId, type, x, y, data: data || getDefaultData(type) });
+        renderWidgets(); save();
+    }
+
+    function getDefaultData(type) {
+        switch(type) {
+            case 'memo': return { title: 'New Memo', items: [] };
+            case 'routine': return { items: [{ text: 'Water', checked: false }] };
+            case 'photo': return { url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067&auto=format&fit=crop', caption: 'Memories' };
+            case 'calendar': return {};
+        }
+    }
+
+    function renderWidgets() {
+        const container = document.getElementById('canvas'); container.innerHTML = '';
+        state.widgets.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'widget group'; div.style.left = w.x + 'px'; div.style.top = w.y + 'px';
+            
+            let html = '';
+            if (w.type === 'memo') {
+                html = `
+                    <article class="bg-white rounded-3xl p-6 shadow-memo w-72 border border-slate-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <input class="font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-4/5 text-lg" value="${w.data.title}" onchange="updateWidgetData(${w.id}, {title: this.value})"/>
+                            <button onclick="deleteWidget(${w.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300 hover:text-red-400">delete</button>
+                        </div>
+                        <ul class="space-y-2 mb-4">
+                            ${w.data.items.map((it, idx) => `<li class="flex items-center gap-3"><input type="checkbox" ${it.checked ? 'checked' : ''} class="naro-checkbox" onchange="toggleItem(${w.id}, ${idx})"/><span class="text-sm font-semibold ${it.checked ? 'line-through opacity-30' : 'text-slate-600'}">${it.text}</span></li>`).join('')}
+                        </ul>
+                        <div class="flex gap-2"><input id="add-item-${w.id}" class="text-xs bg-slate-50 border-none rounded-xl p-2.5 w-full font-bold" placeholder="Add..."/><button onclick="addItem(${w.id})" class="bg-slate-800 text-white rounded-xl px-3 flex items-center justify-center"><span class="material-symbols-outlined text-sm">add</span></button></div>
+                    </article>
+                `;
+            } else if (w.type === 'routine') {
+                html = `
+                    <article class="bg-white rounded-[32px] p-6 shadow-floating w-80 border border-slate-50">
+                        <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-sm"><span class="material-symbols-outlined text-slate-400 text-sm">cycle</span> Routine</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${w.data.items.map((it, idx) => `<div onclick="toggleItem(${w.id}, ${idx})" class="px-4 py-2 rounded-2xl text-[10px] font-black border-2 ${it.checked ? 'bg-slate-50 border-slate-50 text-slate-300' : 'bg-white border-slate-100 text-slate-600'} cursor-pointer transition-all">${it.text}</div>`).join('')}
+                            <button onclick="addRoutineItem(${w.id})" class="px-4 py-2 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 font-black text-[10px]">+</button>
+                        </div>
+                        <button onclick="deleteWidget(${w.id})" class="absolute -top-2 -right-2 bg-white shadow-md border border-slate-100 rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>
+                    </article>
+                `;
+            } else if (w.type === 'photo') {
+                html = `
+                    <article class="bg-white p-3 pb-8 rounded shadow-floating rotate-[1.5deg] w-64">
+                        <div class="magnetic-tape"></div>
+                        <img src="${w.data.url}" class="w-full h-44 object-cover rounded-sm border cursor-pointer" onclick="changePhoto(${w.id})"/>
+                        <input class="text-center w-full text-[11px] font-bold text-slate-400 bg-transparent border-none p-0 focus:ring-0 mt-3" value="${w.data.caption}" onchange="updateWidgetData(${w.id}, {caption: this.value})"/>
+                        <button onclick="deleteWidget(${w.id})" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 material-symbols-outlined text-sm text-red-400 bg-white rounded-full p-1 shadow">delete</button>
+                    </article>
+                `;
+            } else if (w.type === 'calendar') {
+                const now = new Date();
+                html = `
+                    <article class="bg-white rounded-3xl p-6 shadow-floating w-64 border border-slate-50">
+                        <div class="flex justify-between items-center mb-4"><h3 class="text-[11px] font-black uppercase text-slate-400 tracking-widest">${now.toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}</h3><button onclick="deleteWidget(${w.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300 hover:text-red-400 text-sm">delete</button></div>
+                        <div class="grid grid-cols-7 gap-1 text-[10px] text-center font-black mb-3"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+                        <div class="grid grid-cols-7 gap-1 text-[11px] text-center">
+                            ${Array.from({length: 31}, (_, i) => `<div class="${i+1 === now.getDate() ? 'bg-slate-800 text-white rounded-lg font-bold' : 'text-slate-600'} p-1">${i+1}</div>`).join('')}
+                        </div>
+                    </article>
+                `;
+            }
+            div.innerHTML = html; setupDrag(div, w); container.appendChild(div);
+        });
+    }
+
+    function setupDrag(el, widget) {
+        let ox, oy; const snap = 32;
+        el.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button, input')) return;
+            ox = e.clientX - el.offsetLeft; oy = e.clientY - el.offsetTop;
+            const move = (me) => {
+                let x = Math.round((me.clientX - ox) / snap) * snap;
+                let y = Math.round((me.clientY - oy) / snap) * snap;
+                el.style.left = x + 'px'; el.style.top = y + 'px'; widget.x = x; widget.y = y;
+            };
+            const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
+            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+        });
+    }
+
+    function deleteWidget(id) { state.widgets = state.widgets.filter(w => w.id !== id); renderWidgets(); save(); }
+    function updateWidgetData(id, d) { const w = state.widgets.find(w => w.id === id); if (w) { w.data = { ...w.data, ...d }; save(); } }
+    function addItem(id) { const input = document.getElementById(`add-item-${id}`); if (!input.value.trim()) return; const w = state.widgets.find(w => w.id === id); w.data.items.push({ text: input.value, checked: false }); input.value = ''; renderWidgets(); save(); updateNaro(); }
+    function addRoutineItem(id) { const t = prompt("Routine:"); if (!t) return; const w = state.widgets.find(w => w.id === id); w.data.items.push({ text: t, checked: false }); renderWidgets(); save(); updateNaro(); }
+    function toggleItem(wid, idx) { const w = state.widgets.find(w => w.id === wid); w.data.items[idx].checked = !w.data.items[idx].checked; renderWidgets(); save(); updateNaro(); if (w.data.items[idx].checked) showNaroMessage(NARO_TONES[state.mode].happy[Math.floor(Math.random()*3)]); }
+    function changePhoto(id) { const url = prompt("Photo URL:"); if (url) updateWidgetData(id, { url }); renderWidgets(); }
+
+    function updateNaro() {
+        let total = 0, checked = 0;
+        state.widgets.forEach(w => { if (w.data.items) { w.data.items.forEach(i => { total++; if (i.checked) checked++; }); } });
+        const pct = total === 0 ? 100 : (checked / total) * 100;
+        const badge = document.getElementById('achievement-badge');
+        if (pct >= 80) { badge.textContent = '✨'; badge.style.background = '#334155'; }
+        else if (pct < 30 && total > 2) { badge.textContent = '💢'; badge.style.background = '#e11d48'; }
+        else { badge.textContent = '!'; badge.style.background = '#64748b'; }
+    }
+    function showNaroMessage(msg) { document.getElementById('naro-speech').textContent = msg; }
+    init();
 </script>
 </body>
 </html>
