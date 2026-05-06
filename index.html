@@ -1,494 +1,1009 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>NaroTask - Next Gen Workspace</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: { "primary": "#334155", "background": "#fafafa" }
-                }
-            }
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>NaroTask - Next Gen Workspace</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { "primary": "#334155", "background": "#fafafa" }
         }
-    </script>
-    <style>
-        :root { --bg-color: #fafafa; --dot-color: rgba(0,0,0,0.08); }
-        body { background-color: var(--bg-color); user-select: none; font-family: 'Plus_Jakarta_Sans', sans-serif; overflow: hidden; }
-        
-        #canvas-container { position: relative; width: 100%; height: 100%; overflow: auto; cursor: crosshair; }
-        #canvas {
-            position: relative; width: 4000px; height: 4000px;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
-            background-size: 32px 32px;
-            transition: background-color 0.3s, background-image 0.3s;
-        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-color: #fafafa;
+      --dot-color: rgba(0, 0, 0, 0.08);
+    }
 
-        .widget { position: absolute; cursor: grab; transition: transform 0.1s; z-index: 10; }
-        .widget:active { cursor: grabbing; transform: scale(1.02); z-index: 100; }
-        
-        /* Board Tabs */
-        .board-tab {
-            padding: 8px 12px; border-radius: 12px; font-size: 13px; font-weight: 700;
-            display: flex; align-items: center; gap: 8px; transition: all 0.2s; border: 1px solid transparent;
-            cursor: pointer; position: relative; white-space: nowrap;
-        }
-        .board-tab.active { background: #ffffff; color: #334155; border-color: #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .board-tab:not(.active) { color: #94a3b8; }
-        .board-tab:not(.active):hover { background: rgba(0,0,0,0.03); }
+    body {
+      background-color: var(--bg-color);
+      user-select: none;
+      font-family: 'Plus_Jakarta_Sans', sans-serif;
+      overflow: hidden;
+    }
 
-        .board-input {
-            background: transparent; border: none; padding: 0; font-weight: inherit; font-size: inherit;
-            color: inherit; outline: none; width: auto; pointer-events: none;
-        }
-        .board-tab.editing .board-input { pointer-events: auto; background: #f8fafc; padding: 0 4px; border-radius: 4px; min-width: 40px; }
+    #canvas-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      cursor: crosshair;
+    }
 
-        /* Sidebar Tree */
-        .tree-item {
-            padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; color: #64748b; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tree-item:hover { background: #f1f5f9; color: #1e293b; }
-        .tree-item.active { background: #e2e8f0; color: #0f172a; }
-        .tree-item.drag-over { background: #e2e8f0; border: 2px dashed #94a3b8; }
+    #canvas {
+      position: relative;
+      width: 4000px;
+      height: 4000px;
+      background-color: var(--bg-color);
+      background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+      background-size: 32px 32px;
+      transition: background-color 0.3s, background-image 0.3s;
+    }
 
-        /* Tooltip Sidebar */
-        .icon-btn {
-            width: 44px; height: 44px; border-radius: 14px; background: white;
-            display: flex; align-items: center; justify-content: center; border: 1px solid #f1f5f9;
-            color: #64748b; transition: all 0.2s; position: relative;
-        }
-        .icon-btn:hover { background: #334155; color: white; border-color: #334155; transform: translateY(-2px); }
-        .icon-btn .tooltip {
-            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            background: #0f172a; color: white; padding: 6px 12px; border-radius: 8px;
-            font-size: 11px; font-weight: 800; white-space: nowrap; opacity: 0; pointer-events: none;
-            transition: all 0.2s; z-index: 2000; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-        }
-        .icon-btn:hover .tooltip { opacity: 1; bottom: 56px; }
+    .widget {
+      position: absolute;
+      cursor: grab;
+      transition: transform 0.1s;
+      z-index: 10;
+    }
 
-        /* Settings Drawer */
-        #settings-drawer {
-            position: fixed; top: 0; right: -360px; width: 360px; height: 100vh;
-            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
-            z-index: 300; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column;
-        }
-        #settings-drawer.open { right: 0; }
-        input[type="color"] { -webkit-appearance: none; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; overflow: hidden; }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+    .widget:active {
+      cursor: grabbing;
+      transform: scale(1.02);
+      z-index: 100;
+    }
 
-        /* Modals */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(6px);
-            z-index: 400; display: none; align-items: center; justify-content: center; p-6;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white; width: 100%; max-width: 500px; border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); overflow: hidden;
-            display: flex; flex-direction: column; max-height: 90vh;
-        }
-        .modal-content.large { max-width: 800px; }
+    /* Board Tabs */
+    .board-tab {
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+      position: relative;
+      white-space: nowrap;
+    }
 
-        .naro-checkbox {
-            appearance: none; width: 18px; height: 18px; border: 2px solid #cbd5e1;
-            border-radius: 5px; outline: none; cursor: pointer; position: relative; transition: 0.2s;
-        }
-        .naro-checkbox:checked { background: #334155; border-color: #334155; }
-        .naro-checkbox:checked::after { content: '✔'; position: absolute; color: white; font-size: 10px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .board-tab.active {
+      background: #ffffff;
+      color: #334155;
+      border-color: #f1f5f9;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
 
-        .context-menu {
-            position: fixed; background: white; border: 1px solid #f1f5f9; border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 6px; z-index: 500; display: none;
-        }
-        .context-menu button {
-            width: 100%; text-align: left; padding: 8px 12px; border-radius: 6px; font-size: 12px;
-            font-weight: 600; color: #64748b;
-        }
-        .context-menu button:hover { background: #f1f5f9; color: #1e293b; }
+    .board-tab:not(.active) {
+      color: #94a3b8;
+    }
 
-        .truncated-box { max-height: 120px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
-    </style>
+    .board-tab:not(.active):hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .board-input {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-weight: inherit;
+      font-size: inherit;
+      color: inherit;
+      outline: none;
+      width: auto;
+      pointer-events: none;
+    }
+
+    .board-tab.editing .board-input {
+      pointer-events: auto;
+      background: #f8fafc;
+      padding: 0 4px;
+      border-radius: 4px;
+      min-width: 40px;
+    }
+
+    /* Sidebar Tree */
+    .tree-item {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tree-item:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .tree-item.active {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .tree-item.drag-over {
+      background: #e2e8f0;
+      border: 2px dashed #94a3b8;
+    }
+
+    /* Tooltip Sidebar */
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #f1f5f9;
+      color: #64748b;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .icon-btn:hover {
+      background: #334155;
+      color: white;
+      border-color: #334155;
+      transform: translateY(-2px);
+    }
+
+    .icon-btn .tooltip {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s;
+      z-index: 2000;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    }
+
+    .icon-btn:hover .tooltip {
+      opacity: 1;
+      bottom: 56px;
+    }
+
+    /* Naro AI Chat Panel - Channel Talk Style */
+    #naro-chat-panel {
+      position: fixed;
+      bottom: 0;
+      right: 32px;
+      width: 400px;
+      height: 0;
+      max-height: 680px;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -8px 60px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: height 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #naro-chat-panel.open {
+      height: 680px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chat-bubble {
+      padding: 14px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      max-width: 82%;
+      line-height: 1.6;
+      animation: chatFadeIn 0.3s ease;
+      word-break: keep-all;
+      white-space: pre-wrap;
+    }
+
+    @keyframes chatFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-naro {
+      background: #f1f5f9;
+      color: #334155;
+      align-self: flex-start;
+      border-bottom-left-radius: 6px;
+    }
+
+    .chat-user {
+      background: linear-gradient(135deg, #334155, #1e293b);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 6px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 14px 18px;
+      align-self: flex-start;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      background: #94a3b8;
+      border-radius: 50%;
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+      }
+
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .chat-quick-action {
+      padding: 8px 14px;
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .chat-quick-action:hover {
+      background: #334155;
+      color: white;
+      border-color: #334155;
+      transform: translateY(-1px);
+    }
+
+    /* Settings Drawer */
+    #settings-drawer {
+      position: fixed;
+      top: 0;
+      right: -360px;
+      width: 360px;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      z-index: 300;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #settings-drawer.open {
+      right: 0;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 50%;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(6px);
+      z-index: 400;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+    }
+
+    .modal-content.large {
+      max-width: 800px;
+    }
+
+    .naro-checkbox {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: 0.2s;
+    }
+
+    .naro-checkbox:checked {
+      background: #334155;
+      border-color: #334155;
+    }
+
+    .naro-checkbox:checked::after {
+      content: '✔';
+      position: absolute;
+      color: white;
+      font-size: 10px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .context-menu {
+      position: fixed;
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      padding: 6px;
+      z-index: 500;
+      display: none;
+    }
+
+    .context-menu button {
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .context-menu button:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .truncated-box {
+      max-height: 120px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      line-clamp: 5;
+      -webkit-box-orient: vertical;
+    }
+  </style>
 </head>
+
 <body class="text-slate-800">
 
-<div class="flex h-screen overflow-hidden">
+  <div class="flex h-screen overflow-hidden">
     <aside class="w-72 bg-white border-r border-slate-100 flex flex-col p-6 z-50">
-        <div class="flex items-center justify-between mb-8">
-            <h1 class="text-xl font-black tracking-tight text-slate-800">NaroTask</h1>
-            <button onclick="toggleSettings()" class="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
-        </div>
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-xl font-black tracking-tight text-slate-800">NaroTask</h1>
+        <button onclick="toggleSettings()"
+          class="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+      </div>
 
-        <div class="flex-1 overflow-y-auto flex flex-col gap-6">
-            <div>
-                <div class="flex items-center justify-between px-2 mb-3">
-                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Workspace</span>
-                    <button onclick="addFolder()" class="text-slate-400 hover:text-slate-800"><span class="material-symbols-outlined text-sm">add</span></button>
-                </div>
-                <div id="sidebar-tree" class="flex flex-col gap-1"></div>
-            </div>
+      <div class="flex-1 overflow-y-auto flex flex-col gap-6 no-scrollbar">
+        <div>
+          <div class="flex items-center justify-between px-2 mb-3">
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Workspace</span>
+            <button onclick="addFolder()" class="text-slate-400 hover:text-slate-800"><span
+                class="material-symbols-outlined text-sm">add</span></button>
+          </div>
+          <div id="sidebar-tree" class="flex flex-col gap-1 mb-6"></div>
         </div>
+      </div>
 
-        <div class="mt-auto pt-6 border-t border-slate-50 flex gap-3 justify-center">
-            <button onclick="openCreateModal()" class="icon-btn">
-                <span class="material-symbols-outlined">sticky_note_2</span>
-                <span class="tooltip">Add Memo</span>
-            </button>
-            <button onclick="addWidget('routine')" class="icon-btn">
-                <span class="material-symbols-outlined">cycle</span>
-                <span class="tooltip">Daily Routine</span>
-            </button>
-            <button onclick="addWidget('photo')" class="icon-btn">
-                <span class="material-symbols-outlined">image</span>
-                <span class="tooltip">Add Photo</span>
-            </button>
-            <button onclick="addWidget('calendar')" class="icon-btn">
-                <span class="material-symbols-outlined">calendar_month</span>
-                <span class="tooltip">Add Calendar</span>
-            </button>
-        </div>
+      <div class="mt-6 pt-6 border-t border-slate-50 flex gap-3 justify-center">
+        <button onclick="openCreateModal()" class="icon-btn">
+          <span class="material-symbols-outlined">sticky_note_2</span>
+          <span class="tooltip">Add Memo</span>
+        </button>
+        <button onclick="addWidget('routine')" class="icon-btn">
+          <span class="material-symbols-outlined">cycle</span>
+          <span class="tooltip">Daily Routine</span>
+        </button>
+        <button onclick="addWidget('photo')" class="icon-btn">
+          <span class="material-symbols-outlined">image</span>
+          <span class="tooltip">Add Photo</span>
+        </button>
+        <button onclick="addWidget('calendar')" class="icon-btn">
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span class="tooltip">Add Calendar</span>
+        </button>
+      </div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-40">
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="board-tabs">
-                <button onclick="addBoard()" class="p-2 text-slate-400 hover:text-slate-800"><span class="material-symbols-outlined text-sm">add</span></button>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right mr-2 hidden sm:block">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" id="header-date"></p>
-                    <p class="text-xl font-black text-slate-800" id="header-time"></p>
-                </div>
-                <img class="w-9 h-9 rounded-xl object-cover border-2 border-white shadow-sm" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop" />
-            </div>
-        </header>
-
-        <div id="canvas-container">
-            <div id="canvas"></div>
+      <header
+        class="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-40">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="board-tabs">
+          <button onclick="addBoard()" class="p-2 text-slate-400 hover:text-slate-800"><span
+              class="material-symbols-outlined text-sm">add</span></button>
         </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right mr-2 hidden sm:block">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" id="header-date"></p>
+            <p class="text-xl font-black text-slate-800" id="header-time"></p>
+          </div>
+          <img class="w-9 h-9 rounded-xl object-cover border-2 border-white shadow-sm"
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop" />
+        </div>
+      </header>
+
+      <div id="canvas-container">
+        <div id="canvas"></div>
+      </div>
     </main>
-</div>
+  </div>
 
-<!-- Modals -->
-<div id="create-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
-    <div class="modal-content p-10">
-        <h2 class="text-2xl font-black mb-6">New Memo</h2>
-        <div class="space-y-6">
-            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Title</label><input id="new-memo-title" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100" placeholder="Memo Title..."/></div>
-            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Folder</label><select id="new-memo-folder" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100"></select></div>
-            <div class="flex gap-4 pt-4"><button onclick="closeModals()" class="flex-1 bg-slate-100 text-slate-400 font-bold py-4 rounded-2xl">Cancel</button><button onclick="confirmCreateMemo()" class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl">Create</button></div>
+  <!-- Naro AI Chat Panel -->
+  <div id="naro-chat-panel">
+    <div class="bg-[#334155] p-6 text-white flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <div
+            class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+            <span class="material-symbols-outlined text-2xl">smart_toy</span>
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-4 border-[#334155] rounded-full"></div>
         </div>
+        <div>
+          <h3 class="text-sm font-black tracking-tight">Naro AI Assistant</h3>
+          <p class="text-[10px] font-bold text-white/50">Claude 3.5 Sonnet Connected</p>
+        </div>
+      </div>
+      <button onclick="toggleNaroChat()"
+        class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+        <span class="material-symbols-outlined text-xl opacity-60">close</span>
+      </button>
     </div>
-</div>
 
-<div id="doc-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-5 bg-white">
+      <div class="chat-bubble chat-naro">안녕하세요! 당신의 성장을 돕는 나로입니다. 🚀<br><br>워크스페이스 관리부터 오늘 할 일 기획까지 무엇이든 도와드릴게요. 어떤 것이
+        궁금하신가요?</div>
+
+      <!-- Quick Actions Container -->
+      <div id="quick-actions" class="flex flex-wrap gap-2 mt-2">
+        <button onclick="sendQuickAction('오늘 할 일 추천해줘')" class="chat-quick-action">📅 오늘 할 일 추천</button>
+        <button onclick="sendQuickAction('새로운 보드 기획해줘')" class="chat-quick-action">💡 보드 기획 도움</button>
+        <button onclick="sendQuickAction('나로태스크 사용법 알려줘')" class="chat-quick-action">❓ 사용 가이드</button>
+      </div>
+    </div>
+
+    <!-- Typing Indicator (hidden by default) -->
+    <div id="typing-indicator" class="typing-indicator hidden bg-white">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="p-6 bg-white border-t border-slate-50">
+      <div class="relative flex items-center">
+        <input id="chat-input"
+          class="w-full bg-slate-50 border-none rounded-2xl pl-5 pr-14 py-4 text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all"
+          placeholder="나로에게 메시지 보내기..." onkeydown="if(event.key==='Enter') sendNaroMessage()" />
+        <button onclick="sendNaroMessage()"
+          class="absolute right-2 w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+          <span class="material-symbols-outlined text-lg">arrow_upward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="create-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+    <div class="modal-content p-10">
+      <h2 class="text-2xl font-black mb-6">New Memo</h2>
+      <div class="space-y-6">
+        <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Title</label><input
+            id="new-memo-title"
+            class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100"
+            placeholder="Memo Title..." /></div>
+        <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Folder</label><select
+            id="new-memo-folder"
+            class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 ring-slate-100"></select>
+        </div>
+        <div class="flex gap-4 pt-4"><button onclick="closeModals()"
+            class="flex-1 bg-slate-100 text-slate-400 font-bold py-4 rounded-2xl">Cancel</button><button
+            onclick="confirmCreateMemo()"
+            class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl">Create</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="doc-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
     <div class="modal-content large p-10">
-        <div class="flex items-center justify-between mb-8">
-            <input id="doc-title" class="text-3xl font-black text-slate-800 border-none p-0 bg-transparent focus:ring-0 w-3/4" onchange="updateDocTitle(this.value)"/>
-            <button onclick="closeModals()" class="material-symbols-outlined text-slate-300">close</button>
+      <div class="flex items-center justify-between mb-8">
+        <input id="doc-title"
+          class="text-3xl font-black text-slate-800 border-none p-0 bg-transparent focus:ring-0 w-3/4"
+          onchange="updateDocTitle(this.value)" />
+        <button onclick="closeModals()" class="material-symbols-outlined text-slate-300">close</button>
+      </div>
+      <div class="space-y-6 flex-1 overflow-y-auto">
+        <div class="flex items-center justify-between">
+          <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tasks</h3><button
+            onclick="addDocTask()" class="text-slate-800 font-bold text-xs flex items-center gap-1"><span
+              class="material-symbols-outlined text-sm">add</span> Add Task</button>
         </div>
-        <div class="space-y-6 flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between"><h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Tasks</h3><button onclick="addDocTask()" class="text-slate-800 font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-sm">add</span> Add Task</button></div>
-            <div id="doc-tasks-list" class="space-y-3"></div>
-        </div>
+        <div id="doc-tasks-list" class="space-y-3"></div>
+      </div>
     </div>
-</div>
+  </div>
 
-<div id="task-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
+  <div id="task-modal" class="modal-overlay" onclick="closeOnOverlay(event)">
     <div class="modal-content p-10">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-black text-slate-800">Task Detail</h2>
-            <div class="flex items-center gap-3"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="task-dashboard-sync" class="naro-checkbox" onchange="toggleTaskSync(this.checked)"/><span class="text-xs font-bold text-slate-400">Board Sync</span></label><button onclick="closeTaskModal()" class="material-symbols-outlined text-slate-300">close</button></div>
-        </div>
-        <div class="space-y-6 flex-1 overflow-y-auto">
-            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Task Name</label><input id="task-detail-name" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800" onchange="updateTaskDetailName(this.value)"/></div>
-            <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Content</label><textarea id="task-detail-content" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-600 h-32" onchange="updateTaskDetailContent(this.value)"></textarea></div>
-            <button onclick="addTaskImage()" class="w-full border-2 border-dashed border-slate-100 rounded-xl py-4 text-slate-300 font-bold text-xs">+ Add Image URL</button>
-            <div id="task-images" class="grid grid-cols-2 gap-3 pb-4"></div>
-        </div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-black text-slate-800">Task Detail</h2>
+        <div class="flex items-center gap-3"><label class="flex items-center gap-2 cursor-pointer"><input
+              type="checkbox" id="task-dashboard-sync" class="naro-checkbox"
+              onchange="toggleTaskSync(this.checked)" /><span class="text-xs font-bold text-slate-400">Board
+              Sync</span></label><button onclick="closeTaskModal()"
+            class="material-symbols-outlined text-slate-300">close</button></div>
+      </div>
+      <div class="space-y-6 flex-1 overflow-y-auto">
+        <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Task Name</label><input
+            id="task-detail-name" class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-800"
+            onchange="updateTaskDetailName(this.value)" /></div>
+        <div><label class="text-[11px] font-black text-slate-400 uppercase block mb-2">Content</label><textarea
+            id="task-detail-content"
+            class="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-600 h-32"
+            onchange="updateTaskDetailContent(this.value)"></textarea></div>
+        <button onclick="addTaskImage()"
+          class="w-full border-2 border-dashed border-slate-100 rounded-xl py-4 text-slate-300 font-bold text-xs">+ Add
+          Image URL</button>
+        <div id="task-images" class="grid grid-cols-2 gap-3 pb-4"></div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Settings Drawer -->
-<div id="settings-drawer" class="shadow-2xl">
-    <div class="p-8 border-b flex justify-between items-center"><h2 class="text-xl font-black text-slate-800">Board Settings</h2><button onclick="toggleSettings()" class="material-symbols-outlined text-slate-400">close</button></div>
+  <!-- Settings Drawer -->
+  <div id="settings-drawer" class="shadow-2xl">
+    <div class="p-8 border-b flex justify-between items-center">
+      <h2 class="text-xl font-black text-slate-800">Board Settings</h2><button onclick="toggleSettings()"
+        class="material-symbols-outlined text-slate-400">close</button>
+    </div>
     <div class="p-8 flex flex-col gap-8">
-        <div><label class="text-[11px] font-black text-slate-400 uppercase mb-4 block">Presets (Active Board)</label><div class="grid grid-cols-4 gap-3">
-            <button onclick="applyTheme('#ffffff', 'rgba(0,0,0,0.15)')" class="w-full aspect-square rounded-xl bg-white border"></button>
-            <button onclick="applyTheme('#f8fafc', 'rgba(0,0,0,0.12)')" class="w-full aspect-square rounded-xl bg-[#f8fafc] border"></button>
-            <button onclick="applyTheme('#334155', 'rgba(255,255,255,0.1)')" class="w-full aspect-square rounded-xl bg-[#334155] border"></button>
-            <button onclick="applyTheme('#0f172a', 'rgba(255,255,255,0.08)')" class="w-full aspect-square rounded-xl bg-[#0f172a] border"></button>
-        </div></div>
-        <div class="flex items-center justify-between"><label class="text-xs font-black">BG Color</label><input type="color" oninput="updateBg(this.value)"/></div>
-        <div class="flex items-center justify-between"><label class="text-xs font-black">Dot Color</label><input type="color" oninput="updateDots(this.value)"/></div>
+      <div><label class="text-[11px] font-black text-slate-400 uppercase mb-4 block">Presets (Active Board)</label>
+        <div class="grid grid-cols-4 gap-3">
+          <button onclick="applyTheme('#ffffff', 'rgba(0,0,0,0.15)')"
+            class="w-full aspect-square rounded-xl bg-white border"></button>
+          <button onclick="applyTheme('#f8fafc', 'rgba(0,0,0,0.12)')"
+            class="w-full aspect-square rounded-xl bg-[#f8fafc] border"></button>
+          <button onclick="applyTheme('#334155', 'rgba(255,255,255,0.1)')"
+            class="w-full aspect-square rounded-xl bg-[#334155] border"></button>
+          <button onclick="applyTheme('#0f172a', 'rgba(255,255,255,0.08)')"
+            class="w-full aspect-square rounded-xl bg-[#0f172a] border"></button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between"><label class="text-xs font-black">BG Color</label><input
+          type="color" oninput="updateBg(this.value)" /></div>
+      <div class="flex items-center justify-between"><label class="text-xs font-black">Dot Color</label><input
+          type="color" oninput="updateDots(this.value)" /></div>
     </div>
-</div>
+  </div>
 
-<div id="context-menu" class="context-menu">
+  <div id="context-menu" class="context-menu">
     <button onclick="renameBoardRequest()">✏️ Rename</button>
     <button onclick="favoriteBoard()">⭐ Favorite</button>
     <button onclick="deleteBoard()">🗑️ Delete</button>
-</div>
+  </div>
 
-<div id="naro-toast" class="fixed bottom-8 right-8 flex items-end gap-3 z-50">
-    <div class="bg-white/90 backdrop-blur-lg text-slate-800 p-5 rounded-3xl rounded-br-none shadow-2xl border border-slate-100 max-w-[240px] relative mb-6">
-        <p class="text-sm font-bold leading-relaxed" id="naro-speech">오늘도 멋진 하루를!</p>
+  <div id="naro-toast" class="fixed bottom-8 right-8 flex items-end gap-3 z-50 cursor-pointer group"
+    onclick="toggleNaroChat()">
+    <div
+      class="absolute -top-4 -right-4 w-12 h-12 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white transition-transform">
+      <span class="material-symbols-outlined text-xl">chat</span>
     </div>
-    <div class="relative w-32 h-32"><img src="1final.png" class="w-full h-full object-contain scale-110"/></div>
-</div>
+    <div
+      class="bg-white/90 backdrop-blur-lg text-slate-800 p-5 rounded-3xl rounded-br-none shadow-2xl border border-slate-100 max-w-[240px] relative mb-6">
+      <p class="text-sm font-bold leading-relaxed transition-opacity duration-500" id="naro-speech">오늘도 화이팅이에요! 나로가
+        응원할게요! 🚀</p>
+    </div>
+    <div class="relative w-32 h-32"><img src="1final.png" class="w-full h-full object-contain scale-110" /></div>
+  </div>
 
-<script>
+  <script>
+    // 1. 전역 상태 및 변수 선언
     let state = {
-        boards: [{ id: 1, name: 'Board1', widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }],
-        activeBoardId: 1, folders: [], documents: [],
-        currentDocId: null, currentTaskId: null
+      boards: [{ id: 1, name: 'Board1', widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }],
+      activeBoardId: 1, folders: [], documents: [],
+      currentDocId: null, currentTaskId: null
     };
 
+    let contextId = null;
+
+    // 2. Naro AI Chat Logic
+    function toggleNaroChat() {
+      const panel = document.getElementById('naro-chat-panel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        document.getElementById('chat-input').focus();
+      }
+    }
+
+    function sendQuickAction(text) {
+      document.getElementById('chat-input').value = text;
+      sendNaroMessage();
+    }
+
+    async function sendNaroMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      input.value = '';
+
+      const indicator = document.getElementById('typing-indicator');
+      indicator.classList.remove('hidden');
+
+      // AI Response Logic (To be implemented by user)
+      // Example structure:
+      /*
+      try {
+        const response = await fetch('YOUR_API_ENDPOINT', { ... });
+        const data = await response.json();
+        indicator.classList.add('hidden');
+        appendMessage('naro', data.message);
+      } catch (e) {
+        indicator.classList.add('hidden');
+        appendMessage('naro', '오류가 발생했습니다.');
+      }
+      */
+
+      // Temporary mock response
+      setTimeout(() => {
+        indicator.classList.add('hidden');
+        appendMessage('naro', '나로 AI 어시스턴트 기능이 준비되었습니다! 🚀 (여기에 API 연동 코드를 추가해 주세요)');
+      }, 1000);
+    }
+
+    function appendMessage(role, text) {
+      const chat = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `chat-bubble chat-${role}`;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // 3. Naro Speech Bubble Rotation
+    const naroSpeeches = [
+      "오늘도 화이팅이에요! 나로가 응원할게요! 🚀",
+      "어떤 일을 먼저 시작해볼까요? 함께 기획해봐요! ✨",
+      "지칠 땐 잠시 쉬어가는 것도 중요해요. 커피 한 잔 어때요? ☕",
+      "당신의 성장을 나로가 늘 지켜보고 있답니다! 😊",
+      "오늘의 목표를 달성하면 정말 뿌듯할 거예요! 🏆"
+    ];
+    let speechIdx = 0;
+    function rotateNaroSpeech() {
+      const el = document.getElementById('naro-speech');
+      if (el) {
+        el.style.opacity = 0;
+        setTimeout(() => {
+          speechIdx = (speechIdx + 1) % naroSpeeches.length;
+          el.textContent = naroSpeeches[speechIdx];
+          el.style.opacity = 1;
+        }, 500);
+      }
+    }
+
     function init() {
-        const saved = localStorage.getItem('naro_v7_state');
-        if (saved) state = JSON.parse(saved);
-        switchBoard(state.activeBoardId);
-        renderSidebar(); renderBoardTabs(); renderActiveBoard();
-        setInterval(updateClock, 1000); updateClock();
+      const saved = localStorage.getItem('naro_v7_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state = { ...state, ...parsed };
+      }
+      switchBoard(state.activeBoardId);
+      renderSidebar(); renderBoardTabs(); renderActiveBoard();
+      setInterval(updateClock, 1000); updateClock();
+      setInterval(rotateNaroSpeech, 10000); // 10초마다 문구 전환
     }
     function save() { localStorage.setItem('naro_v7_state', JSON.stringify(state)); }
 
     // Theme & Board Settings
     function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
     function applyTheme(bg, dot) {
-        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
-        if(b) b.theme = { bgColor: bg, dotColor: dot };
-        updateCanvasTheme(bg, dot); save();
+      const b = state.boards.find(bd => bd.id === state.activeBoardId);
+      if (b) b.theme = { bgColor: bg, dotColor: dot };
+      updateCanvasTheme(bg, dot); save();
     }
     function updateCanvasTheme(bg, dot) {
-        document.documentElement.style.setProperty('--bg-color', bg);
-        document.documentElement.style.setProperty('--dot-color', dot);
+      document.documentElement.style.setProperty('--bg-color', bg);
+      document.documentElement.style.setProperty('--dot-color', dot);
     }
-    function updateBg(c) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); applyTheme(c, b.theme.dotColor); }
-    function updateDots(c) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); applyTheme(b.theme.bgColor, c); }
+    function updateBg(c) { const b = state.boards.find(bd => bd.id === state.activeBoardId); applyTheme(c, b.theme.dotColor); }
+    function updateDots(c) { const b = state.boards.find(bd => bd.id === state.activeBoardId); applyTheme(b.theme.bgColor, c); }
 
     // Boards & Tabs
-    function addBoard() { const id = Date.now(); state.boards.push({ id, name: `Board${state.boards.length+1}`, widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }); switchBoard(id); }
+    function addBoard() { const id = Date.now(); state.boards.push({ id, name: `Board${state.boards.length + 1}`, widgets: [], isFavorite: false, theme: { bgColor: '#fafafa', dotColor: 'rgba(0,0,0,0.08)' } }); switchBoard(id); }
     function renderBoardTabs() {
-        const container = document.getElementById('board-tabs'); const addBtn = container.querySelector('button'); container.innerHTML = '';
-        state.boards.sort((a,b) => b.isFavorite - a.isFavorite).forEach(b => {
-            const div = document.createElement('div'); div.className = `board-tab ${b.id === state.activeBoardId ? 'active' : ''}`;
-            const span = document.createElement('span'); span.textContent = (b.isFavorite ? '⭐ ' : '') + b.name;
-            const input = document.createElement('input'); input.className = 'board-input'; input.value = b.name; input.style.display = 'none';
-            div.appendChild(span); div.appendChild(input);
-            div.onclick = () => switchBoard(b.id);
-            div.ondblclick = (e) => { e.stopPropagation(); startRename(div, b.id); };
-            div.oncontextmenu = (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY, b.id); };
-            container.appendChild(div);
-        });
-        container.appendChild(addBtn);
+      const container = document.getElementById('board-tabs'); const addBtn = container.querySelector('button'); container.innerHTML = '';
+      state.boards.sort((a, b) => b.isFavorite - a.isFavorite).forEach(b => {
+        const div = document.createElement('div'); div.className = `board-tab ${b.id === state.activeBoardId ? 'active' : ''}`;
+        const span = document.createElement('span'); span.textContent = (b.isFavorite ? '⭐ ' : '') + b.name;
+        const input = document.createElement('input'); input.className = 'board-input'; input.value = b.name; input.style.display = 'none';
+        div.appendChild(span); div.appendChild(input);
+        div.onclick = () => switchBoard(b.id);
+        div.ondblclick = (e) => { e.stopPropagation(); startRename(div, b.id); };
+        div.oncontextmenu = (e) => { e.preventDefault(); showContextMenu(e.clientX, e.clientY, b.id); };
+        container.appendChild(div);
+      });
+      container.appendChild(addBtn);
     }
     function startRename(el, id) {
-        el.classList.add('editing'); const span = el.querySelector('span'); const input = el.querySelector('input');
-        input.style.display = 'block'; span.style.display = 'none'; input.focus(); input.select();
-        const finish = () => { const val = input.value || 'Untitled'; state.boards.find(b=>b.id===id).name = val; renderBoardTabs(); save(); };
-        input.onblur = finish; input.onkeydown = (e) => { if(e.key==='Enter') finish(); };
-        input.style.width = (input.value.length + 2) + 'ch';
-        input.oninput = () => { input.style.width = (input.value.length + 2) + 'ch'; };
+      el.classList.add('editing'); const span = el.querySelector('span'); const input = el.querySelector('input');
+      input.style.display = 'block'; span.style.display = 'none'; input.focus(); input.select();
+      const finish = () => { const val = input.value || 'Untitled'; state.boards.find(b => b.id === id).name = val; renderBoardTabs(); save(); };
+      input.onblur = finish; input.onkeydown = (e) => { if (e.key === 'Enter') finish(); };
+      input.style.width = (input.value.length + 2) + 'ch';
+      input.oninput = () => { input.style.width = (input.value.length + 2) + 'ch'; };
     }
     function switchBoard(id) {
-        state.activeBoardId = id; const b = state.boards.find(bd=>bd.id===id);
-        if(b) updateCanvasTheme(b.theme.bgColor, b.theme.dotColor);
-        renderBoardTabs(); renderActiveBoard(); save();
+      state.activeBoardId = id; const b = state.boards.find(bd => bd.id === id);
+      if (b) updateCanvasTheme(b.theme.bgColor, b.theme.dotColor);
+      renderBoardTabs(); renderActiveBoard(); save();
     }
 
     // Sidebar, Folders & Drag-Drop
-    function addFolder() { const n = prompt("Folder Name:"); if(n) { state.folders.push({id:Date.now(), name:n}); renderSidebar(); save(); } }
+    function addFolder() { const n = prompt("Folder Name:"); if (n) { state.folders.push({ id: Date.now(), name: n }); renderSidebar(); save(); } }
     function renderSidebar() {
-        const tree = document.getElementById('sidebar-tree'); tree.innerHTML = '';
-        state.folders.forEach(f => {
-            const container = document.createElement('div'); container.className = 'mb-2';
-            const fItem = document.createElement('div'); fItem.className = 'tree-item font-bold';
-            fItem.innerHTML = `<span class="material-symbols-outlined text-sm">folder</span> ${f.name}`;
-            fItem.ondragover = (e) => { e.preventDefault(); fItem.classList.add('drag-over'); };
-            fItem.ondragleave = () => fItem.classList.remove('drag-over');
-            fItem.ondrop = (e) => { e.preventDefault(); fItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), f.id); };
-            container.appendChild(fItem);
-            
-            const list = document.createElement('div'); list.id = `f-${f.id}`; list.className = 'ml-4 pl-2 border-l';
-            container.appendChild(list);
-            tree.appendChild(container);
-            state.documents.filter(d=>d.folderId===f.id).forEach(d => renderDocItem(d, list.id));
-        });
-        
-        const defContainer = document.createElement('div');
-        const defItem = document.createElement('div'); defItem.className = 'tree-item opacity-50';
-        defItem.innerHTML = `<span class="material-symbols-outlined text-sm">drafts</span> Default`;
-        defItem.ondragover = (e) => { e.preventDefault(); defItem.classList.add('drag-over'); };
-        defItem.ondragleave = () => defItem.classList.remove('drag-over');
-        defItem.ondrop = (e) => { e.preventDefault(); defItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), 'none'); };
-        defContainer.appendChild(defItem);
-        
-        const defList = document.createElement('div'); defList.id = 'f-none'; defList.className = 'ml-4';
-        defContainer.appendChild(defList);
-        tree.appendChild(defContainer);
-        state.documents.filter(d=>d.folderId==='none').forEach(d => renderDocItem(d, defList.id));
-        
-        const sel = document.getElementById('new-memo-folder'); sel.innerHTML='<option value="none">Default</option>';
-        state.folders.forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.name}</option>`);
+      const tree = document.getElementById('sidebar-tree'); tree.innerHTML = '';
+      state.folders.forEach(f => {
+        const container = document.createElement('div'); container.className = 'mb-2';
+        const fItem = document.createElement('div'); fItem.className = 'tree-item font-bold';
+        fItem.innerHTML = `<span class="material-symbols-outlined text-sm">folder</span> ${f.name}`;
+        fItem.ondragover = (e) => { e.preventDefault(); fItem.classList.add('drag-over'); };
+        fItem.ondragleave = () => fItem.classList.remove('drag-over');
+        fItem.ondrop = (e) => { e.preventDefault(); fItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), f.id); };
+        container.appendChild(fItem);
+
+        const list = document.createElement('div'); list.id = `f-${f.id}`; list.className = 'ml-4 pl-2 border-l';
+        container.appendChild(list);
+        tree.appendChild(container);
+        state.documents.filter(d => d.folderId === f.id).forEach(d => renderDocItem(d, list.id));
+      });
+
+      const defContainer = document.createElement('div');
+      const defItem = document.createElement('div'); defItem.className = 'tree-item opacity-50';
+      defItem.innerHTML = `<span class="material-symbols-outlined text-sm">drafts</span> Default`;
+      defItem.ondragover = (e) => { e.preventDefault(); defItem.classList.add('drag-over'); };
+      defItem.ondragleave = () => defItem.classList.remove('drag-over');
+      defItem.ondrop = (e) => { e.preventDefault(); defItem.classList.remove('drag-over'); moveDoc(Number(e.dataTransfer.getData('docId')), 'none'); };
+      defContainer.appendChild(defItem);
+
+      const defList = document.createElement('div'); defList.id = 'f-none'; defList.className = 'ml-4';
+      defContainer.appendChild(defList);
+      tree.appendChild(defContainer);
+      state.documents.filter(d => d.folderId === 'none').forEach(d => renderDocItem(d, defList.id));
+
+      const sel = document.getElementById('new-memo-folder'); sel.innerHTML = '<option value="none">Default</option>';
+      state.folders.forEach(f => sel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
     }
     function renderDocItem(d, pid) {
-        const div = document.createElement('div'); div.className = 'tree-item'; div.draggable = true;
-        div.innerHTML = `<span class="material-symbols-outlined text-sm">sticky_note_2</span> ${d.title}`;
-        div.onclick = () => openDocModal(d.id);
-        div.ondragstart = (e) => { e.dataTransfer.setData('docId', d.id); el.style.opacity = '0.5'; };
-        div.ondragend = () => { div.style.opacity = '1'; };
-        document.getElementById(pid).appendChild(div);
-        d.tasks.forEach(t => {
-            const tEl = document.createElement('div'); tEl.className = 'pl-6 text-[11px] font-bold text-slate-400 py-1 hover:text-slate-800 cursor-pointer'; tEl.innerHTML = `- ${t.text}`;
-            tEl.onclick = (e) => { e.stopPropagation(); openTaskModal(d.id, t.id); }; document.getElementById(pid).appendChild(tEl);
-        });
+      const div = document.createElement('div'); div.className = 'tree-item'; div.draggable = true;
+      div.innerHTML = `<span class="material-symbols-outlined text-sm">sticky_note_2</span> ${d.title}`;
+      div.onclick = () => openDocModal(d.id);
+      div.ondragstart = (e) => { e.dataTransfer.setData('docId', d.id); div.style.opacity = '0.5'; };
+      div.ondragend = () => { div.style.opacity = '1'; };
+      document.getElementById(pid).appendChild(div);
+      d.tasks.forEach(t => {
+        const tEl = document.createElement('div'); tEl.className = 'pl-6 text-[11px] font-bold text-slate-400 py-1 hover:text-slate-800 cursor-pointer'; tEl.innerHTML = `- ${t.text}`;
+        tEl.onclick = (e) => { e.stopPropagation(); openTaskModal(d.id, t.id); }; document.getElementById(pid).appendChild(tEl);
+      });
     }
-    function moveDoc(docId, folderId) { const d = state.documents.find(doc=>doc.id===docId); if(d) d.folderId = folderId; renderSidebar(); save(); }
+    function moveDoc(docId, folderId) { const d = state.documents.find(doc => doc.id === docId); if (d) d.folderId = folderId; renderSidebar(); save(); }
 
     // Widgets & Board
     function addWidget(type) {
-        const b = state.boards.find(bd=>bd.id===state.activeBoardId); let data = {};
-        if(type==='routine') data = {items:[{text:'Drink Water', checked:false}]};
-        if(type==='photo') data = {url:'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067', caption:'Inspiration'};
-        b.widgets.push({id:Date.now(), type, x:200, y:200, data}); renderActiveBoard(); save();
+      const b = state.boards.find(bd => bd.id === state.activeBoardId); let data = {};
+      if (type === 'routine') data = { items: [{ text: 'Drink Water', checked: false }] };
+      if (type === 'photo') data = { url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2067', caption: 'Inspiration' };
+      b.widgets.push({ id: Date.now(), type, x: 200, y: 200, data }); renderActiveBoard(); save();
     }
     function renderActiveBoard() {
-        const c = document.getElementById('canvas'); c.innerHTML = '';
-        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
-        if(!b) return;
-        b.widgets.forEach(w => {
-            const el = document.createElement('div'); el.className = 'widget group'; el.style.left = w.x+'px'; el.style.top = w.y+'px';
-            let h = '';
-            if(w.type==='memo_sync') {
-                const d = state.documents.find(doc=>doc.id===w.docId);
-                if(d) h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-72 border border-slate-100">
+      const c = document.getElementById('canvas'); c.innerHTML = '';
+      const b = state.boards.find(bd => bd.id === state.activeBoardId);
+      if (!b) return;
+      b.widgets.forEach(w => {
+        const el = document.createElement('div'); el.className = 'widget group'; el.style.left = w.x + 'px'; el.style.top = w.y + 'px';
+        let h = '';
+        if (w.type === 'memo_sync') {
+          const d = state.documents.find(doc => doc.id === w.docId);
+          if (d) h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-72 border border-slate-100">
                     <div class="flex justify-between items-center mb-4"><h4 class="font-black text-slate-800">${d.title}</h4><button onclick="openDocModal(${d.id})" class="material-symbols-outlined text-sm text-slate-300">open_in_new</button></div>
-                    <div class="space-y-2 mb-4">${d.tasks.map(t=>`<div class="text-[11px] font-bold text-slate-400 cursor-pointer" onclick="openTaskModal(${d.id},${t.id})">- ${t.text}</div>`).join('')}</div>
+                    <div class="space-y-2 mb-4">${d.tasks.map(t => `<div class="text-[11px] font-bold text-slate-400 cursor-pointer" onclick="openTaskModal(${d.id},${t.id})">- ${t.text}</div>`).join('')}</div>
                     <button onclick="addDocTaskTo(${d.id})" class="w-full py-2 bg-slate-50 rounded-xl text-[10px] font-black text-slate-400 hover:bg-slate-100">+ QUICK TASK</button>
                 </div>`;
-            } else if(w.type==='task_sync') {
-                const d = state.documents.find(doc=>doc.id===w.docId); const t = d?.tasks.find(tk=>tk.id===w.taskId);
-                if(t) h = `<div class="bg-slate-800 text-white rounded-3xl p-6 shadow-2xl w-64 border border-slate-700">
+        } else if (w.type === 'task_sync') {
+          const d = state.documents.find(doc => doc.id === w.docId); const t = d?.tasks.find(tk => tk.id === w.taskId);
+          if (t) h = `<div class="bg-slate-800 text-white rounded-3xl p-6 shadow-2xl w-64 border border-slate-700">
                     <h4 class="text-[10px] font-black opacity-40 mb-1 uppercase">${d.title}</h4><h3 class="font-black mb-3">${t.text}</h3>
                     <p class="text-[11px] font-bold opacity-60 leading-relaxed truncated-box mb-3">${t.content || '...'}</p>
                     ${t.images.length > 0 ? `<img src="${t.images[0]}" class="w-full h-32 object-cover rounded-xl"/>` : ''}
                 </div>`;
-            } else if(w.type==='photo') {
-                h = `<div class="bg-white p-3 pb-8 rounded shadow-xl rotate-[1deg] w-64 border border-slate-50 relative">
+        } else if (w.type === 'photo') {
+          h = `<div class="bg-white p-3 pb-8 rounded shadow-xl rotate-[1deg] w-64 border border-slate-50 relative">
                     <img src="${w.data.url}" class="w-full h-40 object-cover rounded-sm mb-3"/>
                     <p class="text-center text-[10px] font-black text-slate-400">${w.data.caption}</p>
                     <button onclick="changePhoto(${w.id})" class="absolute top-4 right-4 bg-white/80 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 material-symbols-outlined text-sm text-slate-800">edit</button>
                 </div>`;
-            } else if(w.type==='routine') {
-                h = `<div class="bg-white rounded-[32px] p-6 shadow-xl w-72 border border-slate-50">
+        } else if (w.type === 'routine') {
+          h = `<div class="bg-white rounded-[32px] p-6 shadow-xl w-72 border border-slate-50">
                     <div class="flex justify-between items-center mb-4"><h3 class="text-[10px] font-black text-slate-800">ROUTINE</h3><button onclick="addRoutineItem(${w.id})" class="material-symbols-outlined text-sm text-slate-300">add</button></div>
-                    <div class="flex flex-wrap gap-2">${w.data.items.map((it,i)=>`<div onclick="toggleRoutine(${w.id},${i})" class="px-3 py-1.5 rounded-xl border-2 ${it.checked ? 'bg-slate-50 border-slate-50 text-slate-300':'bg-white border-slate-50 text-slate-600'} text-[9px] font-black cursor-pointer">${it.text}</div>`).join('')}</div>
+                    <div class="flex flex-wrap gap-2">${w.data.items.map((it, i) => `<div onclick="toggleRoutine(${w.id},${i})" class="px-3 py-1.5 rounded-xl border-2 ${it.checked ? 'bg-slate-50 border-slate-50 text-slate-300' : 'bg-white border-slate-50 text-slate-600'} text-[9px] font-black cursor-pointer">${it.text}</div>`).join('')}</div>
                 </div>`;
-            } else if(w.type==='calendar') {
-                const now = new Date();
-                h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-64 border border-slate-50">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-[10px] font-black text-slate-800">${now.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h3><span class="text-[10px] font-black text-slate-400">TODAY: ${now.getDate()}</span></div>
-                    <div class="grid grid-cols-7 gap-1 text-[10px] text-center font-black">${['S','M','T','W','T','F','S'].map(d=>`<div class="opacity-30">${d}</div>`).join('')}${Array.from({length:31}, (_,i)=>`<div class="p-1 ${i+1===now.getDate() ? 'bg-slate-800 text-white rounded-lg' : ''}">${i+1}</div>`).join('')}</div>
+        } else if (w.type === 'calendar') {
+          const now = new Date();
+          h = `<div class="bg-white rounded-3xl p-6 shadow-xl w-64 border border-slate-50">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-[10px] font-black text-slate-800">${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3><span class="text-[10px] font-black text-slate-400">TODAY: ${now.getDate()}</span></div>
+                    <div class="grid grid-cols-7 gap-1 text-[10px] text-center font-black">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div class="opacity-30">${d}</div>`).join('')}${Array.from({ length: 31 }, (_, i) => `<div class="p-1 ${i + 1 === now.getDate() ? 'bg-slate-800 text-white rounded-lg' : ''}">${i + 1}</div>`).join('')}</div>
                 </div>`;
-            }
-            el.innerHTML = h + `<button onclick="deleteWidget(${w.id})" class="absolute -top-2 -right-2 bg-white shadow-md border border-slate-100 rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
-            setupDrag(el, w); c.appendChild(el);
-        });
+        }
+        el.innerHTML = h + `<button onclick="deleteWidget(${w.id})" class="absolute -top-2 -right-2 bg-white shadow-md border border-slate-100 rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
+        setupDrag(el, w); c.appendChild(el);
+      });
     }
 
     // Modal Helpers
     function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
     function closeTaskModal() { document.getElementById('task-modal').classList.remove('active'); }
-    function closeOnOverlay(e) { if(e.target.classList.contains('modal-overlay')) closeModals(); }
+    function closeOnOverlay(e) { if (e.target.classList.contains('modal-overlay')) closeModals(); }
 
     function openCreateModal() { document.getElementById('create-modal').classList.add('active'); }
     function confirmCreateMemo() {
-        const title = document.getElementById('new-memo-title').value || 'Untitled'; const fid = document.getElementById('new-memo-folder').value;
-        const id = Date.now(); state.documents.push({ id, title, folderId: fid==='none' ? 'none' : Number(fid), tasks: [] });
-        const b = state.boards.find(bd=>bd.id===state.activeBoardId); b.widgets.push({ id: Date.now(), type: 'memo_sync', x: 100, y: 100, docId: id });
-        closeModals(); renderSidebar(); renderActiveBoard(); save();
+      const title = document.getElementById('new-memo-title').value || 'Untitled'; const fid = document.getElementById('new-memo-folder').value;
+      const id = Date.now(); state.documents.push({ id, title, folderId: fid === 'none' ? 'none' : Number(fid), tasks: [] });
+      const b = state.boards.find(bd => bd.id === state.activeBoardId); b.widgets.push({ id: Date.now(), type: 'memo_sync', x: 100, y: 100, docId: id });
+      closeModals(); renderSidebar(); renderActiveBoard(); save();
     }
-    function openDocModal(id) { state.currentDocId = id; const d = state.documents.find(doc=>doc.id===id); document.getElementById('doc-title').value = d.title; renderDocTasks(d); document.getElementById('doc-modal').classList.add('active'); }
+    function openDocModal(id) { state.currentDocId = id; const d = state.documents.find(doc => doc.id === id); document.getElementById('doc-title').value = d.title; renderDocTasks(d); document.getElementById('doc-modal').classList.add('active'); }
     function renderDocTasks(d) {
-        const list = document.getElementById('doc-tasks-list'); list.innerHTML = '';
-        d.tasks.forEach(t => {
-            const div = document.createElement('div'); div.className = 'flex items-center gap-3 bg-slate-50 p-4 rounded-2xl group cursor-pointer';
-            div.innerHTML = `<div class="flex-1 font-bold text-slate-800">${t.text}</div><button onclick="event.stopPropagation(); deleteTask(${t.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300">delete</button>`;
-            div.onclick = () => openTaskModal(d.id, t.id); list.appendChild(div);
-        });
+      const list = document.getElementById('doc-tasks-list'); list.innerHTML = '';
+      d.tasks.forEach(t => {
+        const div = document.createElement('div'); div.className = 'flex items-center gap-3 bg-slate-50 p-4 rounded-2xl group cursor-pointer';
+        div.innerHTML = `<div class="flex-1 font-bold text-slate-800">${t.text}</div><button onclick="event.stopPropagation(); deleteTask(${t.id})" class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-300">delete</button>`;
+        div.onclick = () => openTaskModal(d.id, t.id); list.appendChild(div);
+      });
     }
     function addDocTaskTo(id) { state.currentDocId = id; addDocTask(); }
     function addDocTask() {
-        const d = state.documents.find(doc=>doc.id===state.currentDocId); d.tasks.push({ id: Date.now(), text: 'New Task', content: '', showOnBoard: false, images: [] });
-        if(document.getElementById('doc-modal').classList.contains('active')) renderDocTasks(d);
-        renderSidebar(); renderActiveBoard(); save();
+      const d = state.documents.find(doc => doc.id === state.currentDocId); d.tasks.push({ id: Date.now(), text: 'New Task', content: '', showOnBoard: false, images: [] });
+      if (document.getElementById('doc-modal').classList.contains('active')) renderDocTasks(d);
+      renderSidebar(); renderActiveBoard(); save();
     }
     function openTaskModal(did, tid) {
-        state.currentDocId = did; state.currentTaskId = tid; const d = state.documents.find(doc=>doc.id===did); const t = d.tasks.find(tk=>tk.id===tid);
-        document.getElementById('task-detail-name').value = t.text; document.getElementById('task-detail-content').value = t.content;
-        document.getElementById('task-dashboard-sync').checked = t.showOnBoard; renderTaskImages(t); document.getElementById('task-modal').classList.add('active');
+      state.currentDocId = did; state.currentTaskId = tid; const d = state.documents.find(doc => doc.id === did); const t = d.tasks.find(tk => tk.id === tid);
+      document.getElementById('task-detail-name').value = t.text; document.getElementById('task-detail-content').value = t.content;
+      document.getElementById('task-dashboard-sync').checked = t.showOnBoard; renderTaskImages(t); document.getElementById('task-modal').classList.add('active');
     }
     function addTaskImage() {
-        const url = prompt("Image URL:"); if(!url) return;
-        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId);
-        t.images.push(url); renderTaskImages(t); renderActiveBoard(); save();
+      const url = prompt("Image URL:"); if (!url) return;
+      const d = state.documents.find(doc => doc.id === state.currentDocId); const t = d.tasks.find(tk => tk.id === state.currentTaskId);
+      t.images.push(url); renderTaskImages(t); renderActiveBoard(); save();
     }
     function renderTaskImages(t) {
-        const container = document.getElementById('task-images'); container.innerHTML = '';
-        t.images.forEach((img, i) => {
-            const div = document.createElement('div'); div.className = 'relative group';
-            div.innerHTML = `<img src="${img}" class="w-full h-32 object-cover rounded-xl"/><button onclick="deleteTaskImage(${i})" class="absolute top-2 right-2 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
-            container.appendChild(div);
-        });
+      const container = document.getElementById('task-images'); container.innerHTML = '';
+      t.images.forEach((img, i) => {
+        const div = document.createElement('div'); div.className = 'relative group';
+        div.innerHTML = `<img src="${img}" class="w-full h-32 object-cover rounded-xl"/><button onclick="deleteTaskImage(${i})" class="absolute top-2 right-2 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 material-symbols-outlined text-xs text-red-400">close</button>`;
+        container.appendChild(div);
+      });
     }
     function deleteTaskImage(i) {
-        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId);
-        t.images.splice(i, 1); renderTaskImages(t); renderActiveBoard(); save();
+      const d = state.documents.find(doc => doc.id === state.currentDocId); const t = d.tasks.find(tk => tk.id === state.currentTaskId);
+      t.images.splice(i, 1); renderTaskImages(t); renderActiveBoard(); save();
     }
-    function updateTaskDetailName(v) { const d = state.documents.find(doc=>doc.id===state.currentDocId); d.tasks.find(tk=>tk.id===state.currentTaskId).text = v; renderDocTasks(d); renderSidebar(); renderActiveBoard(); save(); }
-    function updateTaskDetailContent(v) { state.documents.find(doc=>doc.id===state.currentDocId).tasks.find(tk=>tk.id===state.currentTaskId).content = v; renderActiveBoard(); save(); }
+    function updateTaskDetailName(v) { const d = state.documents.find(doc => doc.id === state.currentDocId); d.tasks.find(tk => tk.id === state.currentTaskId).text = v; renderDocTasks(d); renderSidebar(); renderActiveBoard(); save(); }
+    function updateTaskDetailContent(v) { state.documents.find(doc => doc.id === state.currentDocId).tasks.find(tk => tk.id === state.currentTaskId).content = v; renderActiveBoard(); save(); }
     function toggleTaskSync(c) {
-        const d = state.documents.find(doc=>doc.id===state.currentDocId); const t = d.tasks.find(tk=>tk.id===state.currentTaskId); t.showOnBoard = c;
-        const b = state.boards.find(bd=>bd.id===state.activeBoardId);
-        if(c) { if(!b.widgets.find(w=>w.taskId===t.id)) b.widgets.push({ id: Date.now(), type: 'task_sync', x: 200, y: 200, taskId: t.id, docId: d.id }); }
-        else { b.widgets = b.widgets.filter(w=>w.taskId!==t.id); }
-        renderActiveBoard(); save();
+      const d = state.documents.find(doc => doc.id === state.currentDocId); const t = d.tasks.find(tk => tk.id === state.currentTaskId); t.showOnBoard = c;
+      const b = state.boards.find(bd => bd.id === state.activeBoardId);
+      if (c) { if (!b.widgets.find(w => w.taskId === t.id)) b.widgets.push({ id: Date.now(), type: 'task_sync', x: 200, y: 200, taskId: t.id, docId: d.id }); }
+      else { b.widgets = b.widgets.filter(w => w.taskId !== t.id); }
+      renderActiveBoard(); save();
     }
 
     // General Helpers
     function setupDrag(el, w) {
-        let ox, oy; el.addEventListener('mousedown', (e) => {
-            if(e.target.closest('button, input, textarea, select')) return;
-            ox = e.clientX - el.offsetLeft; oy = e.clientY - el.offsetTop;
-            const move = (me) => { el.style.left=(Math.round((me.clientX-ox)/32)*32)+'px'; el.style.top=(Math.round((me.clientY-oy)/32)*32)+'px'; w.x=parseInt(el.style.left); w.y=parseInt(el.style.top); };
-            const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
-            document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
-        });
+      let ox, oy; el.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button, input, textarea, select')) return;
+        ox = e.clientX - el.offsetLeft; oy = e.clientY - el.offsetTop;
+        const move = (me) => { el.style.left = (Math.round((me.clientX - ox) / 32) * 32) + 'px'; el.style.top = (Math.round((me.clientY - oy) / 32) * 32) + 'px'; w.x = parseInt(el.style.left); w.y = parseInt(el.style.top); };
+        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+      });
     }
-    function deleteWidget(id) { const b = state.boards.find(bd=>bd.id===state.activeBoardId); b.widgets = b.widgets.filter(w=>w.id!==id); renderActiveBoard(); save(); }
-    function toggleSettings() { document.getElementById('settings-drawer').classList.toggle('open'); }
-    function changePhoto(id) { const url = prompt("New Image URL:"); if(url) { state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===id).data.url = url; renderActiveBoard(); save(); } }
-    function addRoutineItem(id) { const t = prompt("Task:"); if(t) { state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===id).data.items.push({text:t, checked:false}); renderActiveBoard(); save(); } }
-    function toggleRoutine(wid, idx) { const w = state.boards.find(bd=>bd.id===state.activeBoardId).widgets.find(w=>w.id===wid); w.data.items[idx].checked = !w.data.items[idx].checked; renderActiveBoard(); save(); }
-    function updateClock() { const n = new Date(); document.getElementById('header-date').textContent = n.toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'}); document.getElementById('header-time').textContent = n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
-    function showContextMenu(x,y,id) { contextId=id; const m=document.getElementById('context-menu'); m.style.left=x+'px'; m.style.top=y+'px'; m.style.display='block'; const hide=()=>{m.style.display='none'; document.removeEventListener('click',hide);}; setTimeout(()=>document.addEventListener('click',hide),10); }
-    function renameBoardRequest() { const tabs = document.querySelectorAll('.board-tab'); tabs.forEach(t => { if(t.innerText.includes(state.boards.find(b=>b.id===contextId).name)) startRename(t, contextId); }); }
-    function favoriteBoard() { const b=state.boards.find(b=>b.id===contextId); b.isFavorite=!b.isFavorite; renderBoardTabs(); save(); }
-    function deleteBoard() { if(state.boards.length<=1)return; state.boards=state.boards.filter(b=>b.id!==contextId); if(state.activeBoardId===contextId)state.activeBoardId=state.boards[0].id; renderBoardTabs(); renderActiveBoard(); save(); }
+    function deleteWidget(id) { const b = state.boards.find(bd => bd.id === state.activeBoardId); b.widgets = b.widgets.filter(w => w.id !== id); renderActiveBoard(); save(); }
+    function changePhoto(id) { const url = prompt("New Image URL:"); if (url) { state.boards.find(bd => bd.id === state.activeBoardId).widgets.find(w => w.id === id).data.url = url; renderActiveBoard(); save(); } }
+    function addRoutineItem(id) { const t = prompt("Task:"); if (t) { state.boards.find(bd => bd.id === state.activeBoardId).widgets.find(w => w.id === id).data.items.push({ text: t, checked: false }); renderActiveBoard(); save(); } }
+    function toggleRoutine(wid, idx) { const w = state.boards.find(bd => bd.id === state.activeBoardId).widgets.find(w => w.id === wid); w.data.items[idx].checked = !w.data.items[idx].checked; renderActiveBoard(); save(); }
+    function updateClock() { const n = new Date(); document.getElementById('header-date').textContent = n.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' }); document.getElementById('header-time').textContent = n.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+    function showContextMenu(x, y, id) { contextId = id; const m = document.getElementById('context-menu'); m.style.left = x + 'px'; m.style.top = y + 'px'; m.style.display = 'block'; const hide = () => { m.style.display = 'none'; document.removeEventListener('click', hide); }; setTimeout(() => document.addEventListener('click', hide), 10); }
+    function renameBoardRequest() { const tabs = document.querySelectorAll('.board-tab'); tabs.forEach(t => { if (t.innerText.includes(state.boards.find(b => b.id === contextId).name)) startRename(t, contextId); }); }
+    function favoriteBoard() { const b = state.boards.find(b => b.id === contextId); b.isFavorite = !b.isFavorite; renderBoardTabs(); save(); }
+    function deleteBoard() { if (state.boards.length <= 1) return; state.boards = state.boards.filter(b => b.id !== contextId); if (state.activeBoardId === contextId) state.activeBoardId = state.boards[0].id; renderBoardTabs(); renderActiveBoard(); save(); }
 
     init();
-</script>
+  </script>
 </body>
+
 </html>
